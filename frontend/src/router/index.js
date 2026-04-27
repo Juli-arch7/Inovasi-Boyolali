@@ -7,6 +7,7 @@ import ProductDetail from '../views/public/ProductDetail.vue'
 
 // Auth
 import Login from '../views/auth/Login.vue'
+import Register from '../views/auth/Register.vue'
 
 // Dashboards
 import SuperAdminDashboard from '../views/superadmin/Dashboard.vue'
@@ -17,6 +18,7 @@ const routes = [
   { path: '/', name: 'Home', component: Home },
   { path: '/products/:id', name: 'ProductDetail', component: ProductDetail },
   { path: '/login', name: 'Login', component: Login },
+  { path: '/register', name: 'Register', component: Register },
   {
     path: '/superadmin',
     name: 'SuperAdmin',

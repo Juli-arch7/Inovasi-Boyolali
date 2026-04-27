@@ -10,7 +10,10 @@
           <router-link v-if="auth.userRole === 'inisiator'" to="/inisiator">Dashboard</router-link>
           <button class="btn btn-outline btn-sm" @click="handleLogout">Logout</button>
         </template>
-        <router-link v-else to="/login" class="btn btn-primary btn-sm">Masuk</router-link>
+        <template v-else>
+          <router-link to="/login" class="btn btn-outline btn-sm">Masuk</router-link>
+          <router-link to="/register" class="btn btn-primary btn-sm">Daftar Inisiator</router-link>
+        </template>
       </nav>
     </header>
     <router-view />

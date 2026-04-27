@@ -21,9 +21,15 @@ class AuthController extends Controller
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
-        // Depending on role, create profiles (we can simplify this for now or just wait for specific profile creation)
+        // Depending on role, create profiles
         if ($user->role === 'masyarakat') {
             $user->masyarakatProfile()->create(['nama_lengkap' => $user->name ?? $user->username]);
+        } elseif ($user->role === 'inisiator') {
+            $jenis = \App\Models\JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->first();
+            $user->inisiatorProfile()->create([
+                'nama_inisiator' => $user->name ?? $user->username,
+                'id_jenis_inisiator' => $jenis ? $jenis->id : null,
+            ]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
