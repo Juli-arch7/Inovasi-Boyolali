@@ -1,44 +1,68 @@
 <template>
-  <div class="page fade-in">
-    <div v-if="loading" style="text-align:center; padding:3rem; color:var(--text-muted)">Memuat detail...</div>
-    <div v-else-if="!product" style="text-align:center; padding:3rem; color:var(--text-muted)">Produk tidak ditemukan.</div>
+  <div class="product-detail-page container py-4">
+    <div v-if="loading" class="text-center py-5">Memuat detail...</div>
+    <div v-else-if="!product" class="text-center py-5">Produk tidak ditemukan.</div>
     <div v-else>
-      <button class="btn btn-outline btn-sm" @click="$router.push('/')" style="margin-bottom:1.5rem">← Kembali</button>
+      <div class="detail-header mb-4">
+        <button class="btn btn-outline btn-sm mb-2" @click="$router.push('/')">← Kembali</button>
+        <h1 class="page-title">{{ product.nama_inovasi }}</h1>
+      </div>
 
-      <div class="card" style="max-width:800px">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-          <span class="badge badge-approved">✓ Terverifikasi</span>
-          <span style="font-size:0.85rem; color:var(--text-muted)">Tahun {{ product.tahun_inovasi }}</span>
+      <div class="detail-layout">
+        <div class="detail-main">
+          <div class="banner-card card mb-4">
+            <img :src="product.banner || 'https://via.placeholder.com/800x400'" alt="Innovation Banner" class="banner-img">
+          </div>
+
+          <div class="description-section card">
+            <h3 class="section-title">Deskripsi Inovasi</h3>
+            <p class="description-text">
+              {{ product.deskripsi || 'Tidak ada deskripsi.' }}
+            </p>
+          </div>
         </div>
 
-        <h1 style="font-size:1.75rem; font-weight:700; margin-bottom:0.75rem">{{ product.nama_inovasi }}</h1>
+        <aside class="detail-sidebar">
+          <div class="gallery-card card mb-4">
+            <h3 class="sidebar-title">Galeri</h3>
+            <div class="gallery-grid">
+              <img src="https://via.placeholder.com/150" alt="Gallery 1">
+              <img src="https://via.placeholder.com/150" alt="Gallery 2">
+              <img src="https://via.placeholder.com/150" alt="Gallery 3">
+            </div>
+          </div>
 
-        <p style="color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.8">
-          {{ product.deskripsi || 'Tidak ada deskripsi.' }}
-        </p>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem">
-          <div>
-            <span style="font-size:0.8rem; color:var(--text-muted); display:block">OPD</span>
-            <span style="font-weight:500">{{ product.opd?.nama_opd || '-' }}</span>
+          <div class="admin-info-card card">
+            <h3 class="sidebar-title">Informasi Administratif</h3>
+            <div class="info-list">
+              <div class="info-item">
+                <label>Status</label>
+                <span class="badge-success">TERVERIFIKASI</span>
+              </div>
+              <div class="info-item">
+                <label>Tahapan</label>
+                <span>{{ product.tahapan_inovasi?.nama_tahapan || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <label>Inisiator</label>
+                <span>{{ product.inisiator_profile?.nama_inisiator || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <label>Kategori</label>
+                <span>{{ product.is_digital ? 'Digital' : 'Non Digital' }}</span>
+              </div>
+              <div class="info-item">
+                <label>OPD</label>
+                <span>{{ product.opd?.nama_opd || '-' }}</span>
+              </div>
+              <div class="info-item">
+                <label>Tahun</label>
+                <span>{{ product.tahun_inovasi }}</span>
+              </div>
+            </div>
+            <button class="btn btn-primary w-full mt-4">UNDUH PROPOSAL</button>
           </div>
-          <div>
-            <span style="font-size:0.8rem; color:var(--text-muted); display:block">Bentuk Inovasi</span>
-            <span style="font-weight:500">{{ product.bentuk_inovasi?.nama_bentuk || '-' }}</span>
-          </div>
-          <div>
-            <span style="font-size:0.8rem; color:var(--text-muted); display:block">Tahapan</span>
-            <span style="font-weight:500">{{ product.tahapan_inovasi?.nama_tahapan || '-' }}</span>
-          </div>
-          <div>
-            <span style="font-size:0.8rem; color:var(--text-muted); display:block">Digital</span>
-            <span style="font-weight:500">{{ product.is_digital ? 'Ya' : 'Tidak' }}</span>
-          </div>
-          <div>
-            <span style="font-size:0.8rem; color:var(--text-muted); display:block">Inisiator</span>
-            <span style="font-weight:500">{{ product.inisiator_profile?.nama_inisiator || '-' }}</span>
-          </div>
-        </div>
+        </aside>
       </div>
     </div>
   </div>
@@ -64,3 +88,98 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.py-4 { padding-top: 2rem; padding-bottom: 2rem; }
+
+.detail-layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.detail-main {
+  flex: 2;
+}
+
+.detail-sidebar {
+  flex: 1;
+}
+
+.banner-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.section-title, .sidebar-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+.description-text {
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.gallery-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.info-item span {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-block;
+  width: fit-content;
+}
+</style>

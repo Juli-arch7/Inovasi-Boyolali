@@ -13,17 +13,27 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'nullable|string|max:255',
             'username' => 'required|string|unique:users',
-            'email' => 'required|string|email|unique:users',
+            'email' => 'nullable|string|email|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'nullable|string'
         ]);
 
+        // If email is missing, generate one from username
+        if (empty($data['email'])) {
+            $data['email'] = $data['username'] . '@inv.com';
+        }
+
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
-        // Depending on role, create profiles (we can simplify this for now or just wait for specific profile creation)
-        if ($user->role === 'masyarakat') {
-            $user->masyarakatProfile()->create(['nama_lengkap' => $user->name ?? $user->username]);
+        // Create inisiator profile by default for registered users if no role specified
+        if (!$user->role || $user->role === 'inisiator') {
+            $user->role = 'inisiator';
+            $user->save();
+            $user->inisiatorProfile()->create([
+                'nama_inisiator' => $user->name ?? $user->username,
+                'id_jenis_inisiator' => 5 // Masyarakat as default
+            ]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -31,14 +41,16 @@ class AuthController extends Controller
     }
 
     public function login(Request $request) {
-        $credentials = $request->validate([
-            'email' => 'required|string|email',
+        $data = $request->validate([
+            'email' => 'required|string', // This can be email or username
             'password' => 'required|string'
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $data['email'])
+                    ->orWhere('username', $data['email'])
+                    ->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (!$user || !Hash::check($data['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
