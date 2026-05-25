@@ -37,10 +37,8 @@ const roleName = computed(() => {
 const menuItems = computed(() => {
   if (auth.userRole === 'inisiator') {
     return [
-      { path: '/inisiator', label: 'Dashboard', icon: '📊' },
-      { path: '/inisiator/innovations', label: 'Inovasi Saya', icon: '💡' },
-      { path: '/inisiator/submissions', label: 'Pengajuan', icon: '📝' },
-      { path: '/inisiator/settings', label: 'Settings', icon: '⚙️' },
+      { path: '/inisiator', label: 'Inovasi Saya', icon: '💡' },
+      { path: '/inisiator/pengajuan', label: 'Pengajuan Inovasi', icon: '📝' },
     ]
   } else if (auth.userRole === 'superadmin') {
     return [
@@ -56,6 +54,10 @@ const menuItems = computed(() => {
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
       { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
     ]
+    if (auth.userRole === 'superadmin') {
+      items.push({ path: '/superadmin', label: 'Manajemen Admin', icon: '🛠️' })
+    }
+    return items
   }
   return []
 })

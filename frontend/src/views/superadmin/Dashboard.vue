@@ -78,7 +78,14 @@
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-outline btn-sm">Edit</button>
+                  <button 
+                    v-if="admin.id !== currentUserId" 
+                    class="btn btn-outline btn-sm delete-btn" 
+                    @click="deleteAdmin(admin.id)"
+                  >
+                    Hapus
+                  </button>
+                  <span v-else class="text-muted" style="font-size: 0.85rem; font-style: italic;">Anda</span>
                 </td>
               </tr>
               <tr v-if="admins.length === 0">
@@ -94,7 +101,7 @@
 
 <script setup>
 import Sidebar from '../../components/Sidebar.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '../../services/api'
 
 const admins = ref([])
@@ -105,6 +112,12 @@ const formError = ref(false)
 
 const form = ref({
   name: '', username: '', email: '', password: '', level: 'admin'
+})
+
+const currentUserId = computed(() => {
+  const userStr = localStorage.getItem('user')
+  const userObj = userStr ? JSON.parse(userStr) : null
+  return userObj?.id
 })
 
 async function loadAdmins() {
@@ -134,6 +147,17 @@ async function createAdmin() {
   }
 }
 
+async function deleteAdmin(id) {
+  if (!confirm('Apakah Anda yakin ingin menghapus administrator ini?')) return
+  try {
+    const res = await api.delete(`/superadmin/admins/${id}`)
+    alert(res.data.message || 'Admin berhasil dihapus.')
+    await loadAdmins()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Gagal menghapus admin.')
+  }
+}
+
 onMounted(loadAdmins)
 </script>
 
@@ -157,5 +181,13 @@ onMounted(loadAdmins)
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+.delete-btn {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.delete-btn:hover {
+  background: var(--danger);
+  color: #fff;
 }
 </style>

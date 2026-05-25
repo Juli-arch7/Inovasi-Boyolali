@@ -9,6 +9,7 @@ use App\Models\TahapanInovasi;
 use App\Models\BentukInovasi;
 use App\Models\JenisInisiator;
 use App\Models\OPD;
+use App\Models\ProdukInovasi;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -62,9 +63,14 @@ class DatabaseSeeder extends Seeder
         }
 
         // ─── Bentuk Inovasi ───
-        $bentukNames = ['Teknologi', 'Pertanian', 'Medis'];
+        $bentukNames = [
+            'Inovasi Pelayanan Publik',
+            'Inovasi Tata Kelola Pemerintahan',
+            'Inovasi Daerah Lainnya'
+        ];
+        $bentukModels = [];
         foreach ($bentukNames as $name) {
-            BentukInovasi::create(['nama_bentuk' => $name]);
+            $bentukModels[$name] = BentukInovasi::create(['nama_bentuk' => $name]);
         }
 
         // ─── Jenis Inisiator ───
@@ -73,21 +79,18 @@ class DatabaseSeeder extends Seeder
             JenisInisiator::create(['nama_jenis_inisiator' => $name]);
         }
 
-        // ─── OPD (Dummy) ───
+        // ─── OPD (Dummy & Real ones for mockup) ───
         $opdData = [
-            ['nama_opd' => 'Dinas Komunikasi dan Informatika', 'alamat_opd' => 'Jl. Merdeka No. 1, Boyolali'],
-            ['nama_opd' => 'Dinas Kesehatan', 'alamat_opd' => 'Jl. Pandanaran No. 10, Boyolali'],
-            ['nama_opd' => 'Dinas Pertanian dan Pangan', 'alamat_opd' => 'Jl. Kartini No. 5, Boyolali'],
+            ['nama_opd' => 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', 'alamat_opd' => 'Jl. Merdeka No. 1, Boyolali'],
+            ['nama_opd' => 'Dinas Pemberdayaan Masyarakat dan Desa', 'alamat_opd' => 'Jl. Pandanaran No. 10, Boyolali'],
+            ['nama_opd' => 'Dinas Komunikasi dan Informatika', 'alamat_opd' => 'Jl. Kartini No. 5, Boyolali'],
+            ['nama_opd' => 'Dinas Kesehatan', 'alamat_opd' => 'Jl. Pandanaran No. 12, Boyolali'],
             ['nama_opd' => 'Dinas Pendidikan dan Kebudayaan', 'alamat_opd' => 'Jl. Boyolali - Solo Km 2, Boyolali'],
-            ['nama_opd' => 'Dinas Perindustrian dan Perdagangan', 'alamat_opd' => 'Jl. Raya Semarang No. 8, Boyolali'],
-            ['nama_opd' => 'Dinas Lingkungan Hidup', 'alamat_opd' => 'Jl. Merapi No. 3, Boyolali'],
             ['nama_opd' => 'Badan Perencanaan Pembangunan Daerah', 'alamat_opd' => 'Jl. Perintis Kemerdekaan No. 12, Boyolali'],
-            ['nama_opd' => 'Dinas Sosial', 'alamat_opd' => 'Jl. Diponegoro No. 7, Boyolali'],
-            ['nama_opd' => 'Dinas Kependudukan dan Pencatatan Sipil', 'alamat_opd' => 'Jl. Sudirman No. 15, Boyolali'],
-            ['nama_opd' => 'Dinas Pariwisata dan Pemuda Olahraga', 'alamat_opd' => 'Jl. Merbabu No. 20, Boyolali'],
         ];
+        $opdModels = [];
         foreach ($opdData as $opd) {
-            OPD::create($opd);
+            $opdModels[$opd['nama_opd']] = OPD::create($opd);
         }
 
         // ─── Super Admin ───
@@ -98,7 +101,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'superadmin'
         ]);
-        $superAdmin->adminProfile()->create(['nama_admin' => 'Super Admin Utama', 'level' => 'super_admin']);
+        $superAdminProfile = $superAdmin->adminProfile()->create(['nama_admin' => 'Super Admin Utama', 'level' => 'super_admin']);
 
         // ─── Inisiator ───
         $jenisOPD = JenisInisiator::where('nama_jenis_inisiator', 'OPD')->first();
@@ -109,9 +112,55 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'inisiator'
         ]);
-        $inisiator->inisiatorProfile()->create([
+        $inisiatorProfile = $inisiator->inisiatorProfile()->create([
             'nama_inisiator' => 'Budi',
-            'id_jenis_inisiator' => $jenisOPD->id
+            'id_jenis_inisiator' => $jenisOPD->id,
+            'id_kelurahan' => Kelurahan::first()->id // Assign to first Kelurahan (Siswodipuran/Boyolali)
+        ]);
+
+        // ─── Seed mock approved products for home page ───
+        $tahapanPenerapan = TahapanInovasi::where('nama_tahapan', 'Penerapan')->first();
+
+        // Product 1
+        ProdukInovasi::create([
+            'id_inisiator' => $inisiatorProfile->id,
+            'id_opd' => $opdModels['Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu']->id,
+            'id_bentuk' => $bentukModels['Inovasi Pelayanan Publik']->id,
+            'id_tahapan' => $tahapanPenerapan->id,
+            'id_admin' => $superAdminProfile->id,
+            'nama_inovasi' => 'Sistem Informasi Manajemen Pelayanan Terpadu Satu Pintu',
+            'deskripsi' => 'Sistem integrasi pelayanan perizinan terpadu satu pintu untuk meningkatkan efisiensi dan transparansi pelayanan publik bagi masyarakat Boyolali.',
+            'tahun_inovasi' => 2023,
+            'status_kurasi' => 'approved',
+            'is_digital' => true
+        ]);
+
+        // Product 2
+        ProdukInovasi::create([
+            'id_inisiator' => $inisiatorProfile->id,
+            'id_opd' => $opdModels['Dinas Pemberdayaan Masyarakat dan Desa']->id,
+            'id_bentuk' => $bentukModels['Inovasi Daerah Lainnya']->id,
+            'id_tahapan' => $tahapanPenerapan->id,
+            'id_admin' => $superAdminProfile->id,
+            'nama_inovasi' => 'Program Pemberdayaan Ekonomi Kreatif Desa Mandiri',
+            'deskripsi' => 'Pelatihan dan pendampingan UMKM berbasis keunggulan lokal untuk mendorong kemandirian ekonomi desa di wilayah Kabupaten Boyolali.',
+            'tahun_inovasi' => 2023,
+            'status_kurasi' => 'approved',
+            'is_digital' => false
+        ]);
+
+        // Product 3
+        ProdukInovasi::create([
+            'id_inisiator' => $inisiatorProfile->id,
+            'id_opd' => $opdModels['Dinas Komunikasi dan Informatika']->id,
+            'id_bentuk' => $bentukModels['Inovasi Tata Kelola Pemerintahan']->id,
+            'id_tahapan' => $tahapanPenerapan->id,
+            'id_admin' => $superAdminProfile->id,
+            'nama_inovasi' => 'Portal Data Terbuka Smart City Integrasi',
+            'deskripsi' => 'Platform penyediaan data sektoral yang terbuka, terintegrasi, dan mudah diakses oleh publik guna mendukung transparansi tata kelola daerah.',
+            'tahun_inovasi' => 2024,
+            'status_kurasi' => 'approved',
+            'is_digital' => true
         ]);
     }
 }

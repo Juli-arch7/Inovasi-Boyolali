@@ -35,3 +35,9 @@ async function handleLogout() {
   router.push('/')
 }
 </script>
+
+<style scoped>
+.mr-2 {
+  margin-right: 0.75rem;
+}
+</style>

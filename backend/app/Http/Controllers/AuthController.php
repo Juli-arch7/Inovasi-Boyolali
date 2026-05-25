@@ -26,13 +26,16 @@ class AuthController extends Controller
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
-        // Create inisiator profile by default for registered users if no role specified
-        if (!$user->role || $user->role === 'inisiator') {
+        // Depending on role, create profiles
+        if ($user->role === 'masyarakat') {
+            $user->masyarakatProfile()->create(['nama_lengkap' => $user->name ?? $user->username]);
+        } elseif (!$user->role || $user->role === 'inisiator') {
             $user->role = 'inisiator';
             $user->save();
+            $jenis = \App\Models\JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->first();
             $user->inisiatorProfile()->create([
                 'nama_inisiator' => $user->name ?? $user->username,
-                'id_jenis_inisiator' => 5 // Masyarakat as default
+                'id_jenis_inisiator' => $jenis ? $jenis->id : 5,
             ]);
         }
 

@@ -67,7 +67,16 @@ const filteredProducts = computed(() => {
   return myProducts.value.filter(p => {
     const matchesSearch = p.nama_inovasi.toLowerCase().includes(searchQuery.value.toLowerCase())
     if (activeTab.value === 'Semua') return matchesSearch
-    return matchesSearch && p.status_kurasi === activeTab.value.toLowerCase()
+    
+    let statusMatch = false
+    if (activeTab.value === 'Draft') {
+      statusMatch = p.status_kurasi === 'draft'
+    } else if (activeTab.value === 'Verifikasi') {
+      statusMatch = p.status_kurasi === 'pending'
+    } else if (activeTab.value === 'Selesai') {
+      statusMatch = p.status_kurasi === 'approved'
+    }
+    return matchesSearch && statusMatch
   })
 })
 

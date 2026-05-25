@@ -166,7 +166,7 @@ const filters = ref({
   category: '',
   kecamatan: '',
   kelurahan: '',
-  tahun: '2024',
+  tahun: '',
   bentuk: [],
   kematangan: '',
   waktu: '',
@@ -175,9 +175,52 @@ const filters = ref({
 
 const filteredProducts = computed(() => {
   return products.value.filter(p => {
-    const matchName = p.nama_inovasi.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchCategory = filters.value.category ? p.kategori === filters.value.category : true
-    return matchName && matchCategory
+    // 1. Search Query
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      const matchName = p.nama_inovasi.toLowerCase().includes(q)
+      const matchDesc = p.deskripsi && p.deskripsi.toLowerCase().includes(q)
+      const matchOpd = p.opd?.nama_opd && p.opd.nama_opd.toLowerCase().includes(q)
+      if (!matchName && !matchDesc && !matchOpd) return false
+    }
+
+    // 2. Kategori
+    if (filters.value.category) {
+      const bName = p.bentuk_inovasi?.nama_bentuk || ''
+      if (filters.value.category === 'Pelayanan Publik' && !bName.includes('Pelayanan Publik')) return false
+      if (filters.value.category === 'Tata Kelola Pemerintahan' && !bName.includes('Tata Kelola')) return false
+      if (filters.value.category === 'Inovasi Daerah Lainnya' && (bName.includes('Pelayanan Publik') || bName.includes('Tata Kelola'))) return false
+    }
+
+    // 3. Kecamatan
+    if (filters.value.kecamatan) {
+      const matchKecName = p.inisiator_profile?.kelurahan?.kecamatan?.nama_kecamatan === filters.value.kecamatan
+      const matchKecId = p.inisiator_profile?.kelurahan?.kecamatan?.id === Number(filters.value.kecamatan)
+      if (!matchKecName && !matchKecId) return false
+    }
+
+    // 4. Kelurahan
+    if (filters.value.kelurahan) {
+      const matchKelName = p.inisiator_profile?.kelurahan?.nama_kelurahan === filters.value.kelurahan
+      const matchKelId = p.inisiator_profile?.kelurahan?.id === Number(filters.value.kelurahan)
+      if (!matchKelName && !matchKelId) return false
+    }
+
+    // 5. Tahun
+    if (filters.value.tahun) {
+      if (p.tahun_inovasi !== Number(filters.value.tahun)) return false
+    }
+
+    // 6. Bentuk (Digital / Non-Digital Checkbox)
+    if (filters.value.bentuk && filters.value.bentuk.length > 0) {
+      const isDig = !!p.is_digital
+      const wantsDigital = filters.value.bentuk.includes('digital')
+      const wantsNonDigital = filters.value.bentuk.includes('non-digital')
+      if (wantsDigital && !wantsNonDigital && !isDig) return false
+      if (!wantsDigital && wantsNonDigital && isDig) return false
+    }
+
+    return true
   })
 })
 
@@ -202,7 +245,7 @@ onMounted(async () => {
 })
 
 function applyFilters() {
-  // Logic to apply filters
+  // Computed property filteredProducts takes care of reactive rendering dynamically!
 }
 
 function goToDetail(id) {
