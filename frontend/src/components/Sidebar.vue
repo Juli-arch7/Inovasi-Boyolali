@@ -42,12 +42,19 @@ const menuItems = computed(() => {
       { path: '/inisiator/submissions', label: 'Pengajuan', icon: '📝' },
       { path: '/inisiator/settings', label: 'Settings', icon: '⚙️' },
     ]
-  } else if (auth.userRole === 'admin' || auth.userRole === 'superadmin') {
+  } else if (auth.userRole === 'superadmin') {
+    return [
+      { path: '/superadmin', label: 'Admin', icon: '👥' },
+      { path: '/admin/users', label: 'Pengguna', icon: '👥' },
+      { path: '/admin', label: 'Dashboard', icon: '📊' },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
+    ]
+  } else if (auth.userRole === 'admin') {
     return [
       { path: '/admin', label: 'Dashboard', icon: '📊' },
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
       { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
-      { path: '/admin/users', label: 'Pengguna', icon: '👥' },
     ]
   }
   return []
