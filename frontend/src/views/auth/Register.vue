@@ -1,38 +1,40 @@
 <template>
-  <div class="auth-container">
-    <div class="auth-card fade-in" style="max-width: 500px">
-      <h2>Daftar Sebagai Inisiator</h2>
-      <p class="subtitle">Buat akun untuk mulai mengajukan produk inovasi daerah Anda</p>
+  <div class="auth-wrapper">
+    <div class="auth-card fade-in">
+      <h2>Daftar Akun</h2>
+      <p class="subtitle">Buat Akun untuk Mengakses Sistem</p>
 
-      <div v-if="error" class="alert alert-error">{{ error }}</div>
+      <div v-if="error" class="alert alert-error mb-4">{{ error }}</div>
+      <div v-if="success" class="alert alert-success mb-4">{{ success }}</div>
 
       <form @submit.prevent="handleRegister">
         <div class="form-group">
-          <label for="name">Nama Lengkap</label>
-          <input id="name" type="text" class="form-control" v-model="form.name" placeholder="Joko Widodo" required />
-        </div>
-        
-        <div class="form-group">
           <label for="username">Username</label>
-          <input id="username" type="text" class="form-control" v-model="form.username" placeholder="jokowi" required />
+          <input id="username" type="text" class="form-control" v-model="username" placeholder="Masukkan Username" required />
         </div>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input id="email" type="email" class="form-control" v-model="form.email" placeholder="joko@contoh.com" required />
-        </div>
-        
         <div class="form-group">
           <label for="password">Password</label>
-          <input id="password" type="password" class="form-control" v-model="form.password" placeholder="••••••••" required minlength="6" />
+          <input id="password" type="password" class="form-control" v-model="password" placeholder="Masukkan Password" required />
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Konfirmasi Password</label>
+          <input id="confirmPassword" type="password" class="form-control" v-model="confirmPassword" placeholder="Konfirmasi Password Anda" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="checkbox-container">
+            <input type="checkbox" v-model="agree" required>
+            <span class="checkmark"></span>
+            Saya Setuju dengan Syarat dan Ketentuan
+          </label>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem" :disabled="submitting">
-          {{ submitting ? 'Memproses...' : 'Daftar' }}
+        <button type="submit" class="btn btn-primary w-full" :disabled="submitting">
+          {{ submitting ? 'MEMPROSES...' : 'DAFTAR' }}
         </button>
 
-        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
-          Sudah punya akun? <router-link to="/login" style="font-weight: 500;">Masuk di sini</router-link>
+        <p class="text-center mt-4 text-muted">
+          Sudah Punya Akun? <router-link to="/login" class="forgot-link">Masuk</router-link>
         </p>
       </form>
     </div>
@@ -47,29 +49,39 @@ import { useAuthStore } from '../../stores/auth'
 const auth = useAuthStore()
 const router = useRouter()
 
-const form = ref({
-  name: '',
-  username: '',
-  email: '',
-  password: '',
-  role: 'inisiator'
-})
-
+const username = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const agree = ref(false)
 const error = ref('')
+const success = ref('')
 const submitting = ref(false)
 
 async function handleRegister() {
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Password konfirmasi tidak cocok'
+    return
+  }
+
+  if (!agree.value) {
+    error.value = 'Anda harus setuju dengan syarat dan ketentuan'
+    return
+  }
+
   error.value = ''
+  success.value = ''
   submitting.value = true
+  
   try {
-    const data = await auth.register(form.value)
-    
-    // After registration, redirect to dashboard
-    if (data.user.role === 'inisiator') {
+    await auth.register({
+      username: username.value,
+      password: password.value,
+      role: 'inisiator'
+    })
+    success.value = 'Registrasi berhasil! Mengalihkan ke dashboard...'
+    setTimeout(() => {
       router.push('/inisiator')
-    } else {
-      router.push('/')
-    }
+    }, 1500)
   } catch (e) {
     error.value = e.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.'
   } finally {
@@ -77,3 +89,34 @@ async function handleRegister() {
   }
 }
 </script>
+
+<style scoped>
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.forgot-link {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+.alert-success {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+</style>

@@ -2,144 +2,116 @@
   <div class="dashboard-layout">
     <Sidebar />
     <main class="content-area">
-      <!-- Title Header Section -->
-      <div class="form-header mb-4">
-        <h1 class="form-title">Pengajuan Inovasi Baru</h1>
-        <p class="form-subtitle">Lengkapi detail formulir di bawah ini untuk mendaftarkan inovasi Anda ke dalam sistem.</p>
+      <div class="page-header mb-4">
+        <h1 class="page-title">{{ isEdit ? 'Edit Inovasi' : 'Pengajuan Inovasi Baru' }}</h1>
+        <p class="text-muted">Lengkapi formulir di bawah ini untuk mengajukan inovasi Anda.</p>
       </div>
 
       <div v-if="msg" :class="['alert', isError ? 'alert-error' : 'alert-success', 'mb-4']">{{ msg }}</div>
 
-      <form @submit.prevent="handleSubmit" class="innovation-form" enctype="multipart/form-data">
-        <div class="form-grid">
-          <!-- Left Column: Data Inisiator -->
-          <div class="form-column">
-            <h2 class="column-title">Data Inisiator</h2>
-            
+      <form @submit.prevent="handleSubmit">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Data Inisiator -->
+          <div class="card">
+            <h3 class="section-title mb-4">Data Inisiator</h3>
             <div class="form-group">
-              <label>Nama Lengkap</label>
-              <input 
-                v-model="form.nama_inisiator" 
-                type="text" 
-                placeholder="Masukkan nama lengkap" 
-                class="form-control" 
-                required 
-              />
+              <label>Nama Lengkap Inisiator</label>
+              <input type="text" class="form-control" v-model="form.nama_inisiator" placeholder="Nama Lengkap Inisiator" required />
             </div>
-
             <div class="form-group">
               <label>Jenis Inisiator</label>
-              <select v-model="form.id_jenis_inisiator" class="form-control" required>
-                <option value="">Pilih jenis inisiator</option>
+              <select class="form-control" v-model="form.id_jenis_inisiator" required>
+                <option value="">Pilih Jenis</option>
                 <option v-for="jenis in jenisInisiatorOptions" :key="jenis.id" :value="jenis.id">
                   {{ jenis.nama_jenis_inisiator }}
                 </option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Kontak (Email / No. HP)</label>
-              <input 
-                v-model="form.kontak" 
-                type="text" 
-                placeholder="Masukkan email atau nomor HP" 
-                class="form-control" 
-                required 
-              />
+              <input type="text" class="form-control" v-model="form.kontak" placeholder="Email atau Nomor HP" required />
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="form-group">
-                <label>Kecamatan</label>
-                <select v-model="form.id_kecamatan" @change="onKecamatanChange" class="form-control" required>
-                  <option value="">Pilih</option>
-                  <option v-for="kec in kecamatanOptions" :key="kec.id" :value="kec.id">
-                    {{ kec.nama_kecamatan }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Kelurahan</label>
-                <select v-model="form.id_kelurahan" class="form-control" required :disabled="!form.id_kecamatan">
-                  <option value="">Pilih</option>
-                  <option v-for="kel in filteredKelurahans" :key="kel.id" :value="kel.id">
-                    {{ kel.nama_kelurahan }}
-                  </option>
-                </select>
-              </div>
+            <div class="form-group">
+              <label>Kecamatan</label>
+              <select class="form-control" v-model="form.id_kecamatan" @change="onKecamatanChange" required>
+                <option value="">Pilih Kecamatan</option>
+                <option v-for="kec in kecamatanOptions" :key="kec.id" :value="kec.id">
+                  {{ kec.nama_kecamatan }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Kelurahan</label>
+              <select class="form-control" v-model="form.id_kelurahan" required :disabled="!form.id_kecamatan">
+                <option value="">Pilih Kelurahan</option>
+                <option v-for="kel in filteredKelurahans" :key="kel.id" :value="kel.id">
+                  {{ kel.nama_kelurahan }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>OPD</label>
+              <select class="form-control" v-model="form.id_opd" required>
+                <option value="">Pilih OPD</option>
+                <option v-for="opd in opdOptions" :key="opd.id" :value="opd.id">
+                  {{ opd.nama_opd }}
+                </option>
+              </select>
             </div>
           </div>
 
-          <!-- Right Column: Data Inovasi -->
-          <div class="form-column">
-            <h2 class="column-title">Data Inovasi</h2>
-
+          <!-- Data Inovasi -->
+          <div class="card">
+            <h3 class="section-title mb-4">Data Inovasi</h3>
             <div class="form-group">
               <label>Nama Inovasi</label>
-              <input 
-                v-model="form.nama_inovasi" 
-                type="text" 
-                placeholder="Masukkan judul inovasi" 
-                class="form-control" 
-                required 
-              />
+              <input type="text" class="form-control" v-model="form.nama_inovasi" placeholder="Nama Inovasi Anda" required />
             </div>
-
             <div class="form-group">
-              <label>Deskripsi Singkat</label>
-              <textarea 
-                v-model="form.deskripsi" 
-                placeholder="Jelaskan latar belakang, tujuan, dan manfaat inovasi..." 
-                class="form-control textarea-desc" 
-                rows="5"
-                required
-              ></textarea>
+              <label>Tahapan Inovasi</label>
+              <select class="form-control" v-model="form.id_tahapan" required>
+                <option value="">Pilih Tahapan</option>
+                <option v-for="tahap in tahapanOptions" :key="tahap.id" :value="tahap.id">
+                  {{ tahap.nama_tahapan }}
+                </option>
+              </select>
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="form-group">
-                <label>Jenis Inovasi</label>
-                <select v-model="form.id_bentuk" class="form-control" required>
-                  <option value="">Pilih jenis</option>
-                  <option v-for="bentuk in bentukOptions" :key="bentuk.id" :value="bentuk.id">
-                    {{ bentuk.nama_bentuk }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Tahun Inisasi</label>
-                <input 
-                  v-model="form.tahun_inovasi" 
-                  type="number" 
-                  placeholder="YYYY" 
-                  class="form-control" 
-                  min="2000" 
-                  max="2030" 
-                  required 
-                />
-              </div>
-            </div>
-
             <div class="form-group">
-              <div class="label-wrapper">
-                <label>Link Marketplace / Referensi</label>
-                <span class="optional-badge">(Opsional)</span>
-              </div>
-              <input 
-                v-model="form.link_marketplace" 
-                type="url" 
-                placeholder="https://..." 
-                class="form-control" 
-              />
+              <label>Bentuk Inovasi</label>
+              <select class="form-control" v-model="form.id_bentuk" required>
+                <option value="">Pilih Bentuk</option>
+                <option v-for="bentuk in bentukOptions" :key="bentuk.id" :value="bentuk.id">
+                  {{ bentuk.nama_bentuk }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tahun Inovasi</label>
+              <input type="number" class="form-control" v-model="form.tahun_inovasi" :min="2000" :max="2030" required />
             </div>
           </div>
         </div>
 
-        <!-- Full Width: Media Dokumentasi -->
-        <div class="media-section mt-4">
-          <h2 class="column-title">Media Dokumentasi</h2>
+        <div class="card mt-4">
+          <h3 class="section-title mb-4">Deskripsi & Detail</h3>
+          <div class="form-group">
+            <label>Deskripsi Inovasi</label>
+            <textarea class="form-control" v-model="form.deskripsi" rows="5" placeholder="Jelaskan inovasi Anda secara detail..."></textarea>
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer">
+              <input type="checkbox" v-model="form.is_digital" />
+              Inovasi Digital
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Link Marketplace / Referensi <span class="optional-badge">(Opsional)</span></label>
+            <input type="url" class="form-control" v-model="form.link_marketplace" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <h3 class="section-title mb-4">Media Dokumentasi <span class="optional-badge">(Opsional)</span></h3>
           <div 
             class="upload-card" 
             :class="{ dragging: isDragging }"
@@ -182,12 +154,12 @@
           </div>
         </div>
 
-        <!-- Footer Actions -->
-        <div class="form-actions mt-5 pt-3">
-          <button type="button" class="btn btn-outline-cancel" @click="goBack" :disabled="submitting">Batal</button>
-          <button type="submit" class="btn btn-submit-blue" :disabled="submitting">
-            {{ submitting ? 'Mengirim...' : (isEdit ? 'Simpan Perubahan' : 'Kirim Pengajuan') }}
-          </button>
+        <div class="form-actions mt-4">
+          <button type="button" class="btn btn-outline" @click="$router.push('/inisiator')">BATAL</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-outline" @click="saveDraft" :disabled="submitting">SIMPAN DRAFT</button>
+            <button type="submit" class="btn btn-primary" :disabled="submitting">{{ submitting ? 'MENGIRIM...' : 'KIRIM PENGAJUAN' }}</button>
+          </div>
         </div>
       </form>
     </main>
@@ -203,6 +175,9 @@ import api from '../../services/api'
 const route = useRoute()
 const router = useRouter()
 const isEdit = computed(() => !!route.query.id)
+const submitting = ref(false)
+const msg = ref('')
+const isError = ref(false)
 
 const opdOptions = ref([])
 const bentukOptions = ref([])
@@ -211,14 +186,10 @@ const jenisInisiatorOptions = ref([])
 const kecamatanOptions = ref([])
 const allKelurahans = ref([])
 
-const submitting = ref(false)
-const msg = ref('')
-const isError = ref(false)
-const isDragging = ref(false)
-
 const fileInput = ref(null)
 const selectedFile = ref(null)
 const existingFile = ref(null)
+const isDragging = ref(false)
 
 const form = ref({
   nama_inisiator: '',
@@ -226,10 +197,13 @@ const form = ref({
   kontak: '',
   id_kecamatan: '',
   id_kelurahan: '',
+  id_opd: '',
+  id_bentuk: '',
+  id_tahapan: '',
   nama_inovasi: '',
   deskripsi: '',
-  id_bentuk: '',
   tahun_inovasi: new Date().getFullYear(),
+  is_digital: false,
   link_marketplace: ''
 })
 
@@ -242,7 +216,7 @@ function onKecamatanChange() {
   form.value.id_kelurahan = ''
 }
 
-// Uploader interactions
+// Uploader methods
 function triggerFileSelect() {
   fileInput.value.click()
 }
@@ -286,10 +260,6 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-function goBack() {
-  router.push('/inisiator')
-}
-
 async function handleSubmit() {
   submitting.value = true
   msg.value = ''
@@ -300,11 +270,13 @@ async function handleSubmit() {
     formData.append('id_jenis_inisiator', form.value.id_jenis_inisiator)
     formData.append('kontak', form.value.kontak)
     formData.append('id_kelurahan', form.value.id_kelurahan)
-    
-    formData.append('nama_inovasi', form.value.nama_inovasi)
-    formData.append('deskripsi', form.value.deskripsi)
+    formData.append('id_opd', form.value.id_opd)
     formData.append('id_bentuk', form.value.id_bentuk)
+    formData.append('id_tahapan', form.value.id_tahapan)
+    formData.append('nama_inovasi', form.value.nama_inovasi)
+    formData.append('deskripsi', form.value.deskripsi || '')
     formData.append('tahun_inovasi', form.value.tahun_inovasi)
+    formData.append('is_digital', form.value.is_digital ? '1' : '0')
     
     if (form.value.link_marketplace) {
       formData.append('link_marketplace', form.value.link_marketplace)
@@ -315,7 +287,7 @@ async function handleSubmit() {
     }
 
     if (isEdit.value) {
-      formData.append('_method', 'PUT') // Laravel spoofing for multipart PUT
+      formData.append('_method', 'PUT') // Laravel multipart PUT spoofing
       await api.post(`/inisiator/products/${route.query.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
@@ -337,15 +309,19 @@ async function handleSubmit() {
   }
 }
 
+async function saveDraft() {
+  handleSubmit()
+}
+
 onMounted(async () => {
   let profile = null
   try {
     const resMeta = await api.get('/inisiator/metadata')
-    opdOptions.value = resMeta.data.opds
-    bentukOptions.value = resMeta.data.bentuk_inovasis
-    tahapanOptions.value = resMeta.data.tahapan_inovasis
-    jenisInisiatorOptions.value = resMeta.data.jenis_inisiators
-    kecamatanOptions.value = resMeta.data.kecamatans
+    opdOptions.value = resMeta.data.opds || []
+    bentukOptions.value = resMeta.data.bentuk_inovasis || []
+    tahapanOptions.value = resMeta.data.tahapan_inovasis || []
+    jenisInisiatorOptions.value = resMeta.data.jenis_inisiators || []
+    kecamatanOptions.value = resMeta.data.kecamatans || []
     allKelurahans.value = resMeta.data.kelurahan || resMeta.data.kelurahans || []
     profile = resMeta.data.inisiator_profile
     
@@ -370,23 +346,23 @@ onMounted(async () => {
     try {
       const res = await api.get(`/inisiator/products/${route.query.id}`)
       const data = res.data
-      form.value.nama_inovasi = data.nama_inovasi
-      form.value.deskripsi = data.deskripsi
-      form.value.id_bentuk = data.id_bentuk
-      form.value.tahun_inovasi = data.tahun_inovasi
+      form.value = {
+        ...data,
+        is_digital: !!data.is_digital,
+        id_kecamatan: ''
+      }
       
+      if (data.id_kelurahan && allKelurahans.value.length > 0) {
+        const kel = allKelurahans.value.find(k => k.id === data.id_kelurahan)
+        if (kel) {
+          form.value.id_kecamatan = kel.id_kecamatan
+        }
+      }
+
       if (profile) {
         form.value.nama_inisiator = profile.nama_inisiator || ''
         form.value.kontak = profile.kontak || ''
         form.value.id_jenis_inisiator = profile.id_jenis_inisiator || ''
-        form.value.id_kelurahan = profile.id_kelurahan || ''
-        
-        if (profile.id_kelurahan) {
-          const kel = allKelurahans.value.find(k => k.id === profile.id_kelurahan)
-          if (kel) {
-            form.value.id_kecamatan = kel.id_kecamatan
-          }
-        }
       }
 
       const linkMedia = data.media_inovasi?.find(m => m.jenis_media === 'link')
@@ -399,104 +375,25 @@ onMounted(async () => {
         existingFile.value = fileMedia.isi_konten
       }
     } catch (e) {
-      console.error('Gagal memuat produk inovasi:', e)
+      console.error(e)
     }
   }
 })
 </script>
 
 <style scoped>
-.form-header {
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 1.5rem;
-}
-
-.form-title {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.form-subtitle {
-  font-size: 1rem;
-  color: #64748b;
-  margin: 0;
-}
-
-.innovation-form {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1rem 0;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-}
-
-.form-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.column-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  background-color: #ffffff;
-  color: #1e293b;
-  transition: all 0.2s ease-in-out;
-}
-
-.form-control::placeholder {
-  color: #94a3b8;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.textarea-desc {
-  resize: vertical;
-  min-height: 120px;
-}
-
-.label-wrapper {
+.form-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.optional-badge {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 500;
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 0.5rem;
 }
 
 /* Media Dokumentasi Uploader */
@@ -612,47 +509,10 @@ onMounted(async () => {
   color: #ef4444;
 }
 
-/* Actions Footer */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  border-top: 2px solid #e2e8f0;
-}
-
-.btn-outline-cancel {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  color: #2563eb;
-  padding: 0.75rem 2.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-outline-cancel:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-}
-
-.btn-submit-blue {
-  background: #2563eb;
-  border: none;
-  color: #ffffff;
-  padding: 0.75rem 2.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-submit-blue:hover {
-  background: #1d4ed8;
-}
-
-.btn-submit-blue:disabled, .btn-outline-cancel:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.optional-badge {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 0.5rem;
 }
 </style>

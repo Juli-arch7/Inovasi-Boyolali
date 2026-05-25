@@ -2,57 +2,48 @@
   <div class="dashboard-layout">
     <Sidebar />
     <main class="content-area">
-      <div class="page-header mb-4">
-        <h1 class="page-title">Dashboard Inisiator</h1>
-        <p class="text-muted">Ajukan dan pantau status produk inovasi Anda.</p>
+      <div class="header-with-action mb-4">
+        <div class="page-header">
+          <h1 class="page-title">Inovasi Saya</h1>
+          <p class="text-muted">Kelola dan pantau semua inovasi yang telah Anda ajukan.</p>
+        </div>
+        <button class="btn btn-primary" @click="$router.push('/inisiator/pengajuan')">
+          <span class="icon">+</span> Ajukan Inovasi Baru
+        </button>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-row mb-4">
-        <div class="stat-card">
-          <div class="stat-value">{{ myProducts.length }}</div>
-          <div class="stat-label">Total Ajuan</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ myProducts.filter(p => p.status_kurasi === 'approved').length }}</div>
-          <div class="stat-label">Disetujui</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ myProducts.filter(p => p.status_kurasi === 'pending').length }}</div>
-          <div class="stat-label">Menunggu</div>
+      <div class="tabs mb-4">
+        <button v-for="tab in tabs" :key="tab" :class="['tab-item', { active: activeTab === tab }]" @click="activeTab = tab">
+          {{ tab }}
+        </button>
+      </div>
+
+      <div class="search-bar mb-4">
+        <div class="input-with-icon">
+          <span class="icon">🔍</span>
+          <input type="text" class="form-control" v-model="searchQuery" placeholder="Cari Inovasi...">
         </div>
       </div>
 
-      <!-- Tabs & Search -->
-      <div class="card">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div class="tabs">
-            <button v-for="tab in ['Semua', 'Draft', 'Verifikasi', 'Selesai']" :key="tab"
-              :class="['tab-btn', { active: activeTab === tab }]"
-              @click="activeTab = tab">
-              {{ tab }}
-            </button>
+      <div v-if="loading" class="text-center py-5">Memuat data...</div>
+      
+      <div v-else class="innovation-grid">
+        <div v-for="product in filteredProducts" :key="product.id" class="innovation-item card">
+          <div class="item-header">
+            <h3 class="item-title">{{ product.nama_inovasi }}</h3>
+            <span :class="['badge', `badge-${product.status_kurasi}`]">{{ product.status_kurasi }}</span>
           </div>
-          <input v-model="searchQuery" class="form-control" placeholder="Cari inovasi..." style="max-width: 250px;" />
+          <p class="item-description">{{ product.deskripsi || 'Tidak ada deskripsi.' }}</p>
+          <div class="item-footer">
+            <span class="item-meta">Tahun: {{ product.tahun_inovasi }}</span>
+            <div class="item-actions">
+              <button class="btn btn-outline btn-sm" @click="goToDetail(product.id)">Detail</button>
+              <button class="btn btn-outline btn-sm" @click="editProduct(product.id)">Edit</button>
+            </div>
+          </div>
         </div>
-
-        <div v-if="loading" class="text-center py-5">Memuat data...</div>
-
-        <div v-else class="innovation-grid">
-          <div v-for="product in filteredProducts" :key="product.id" class="innovation-item card">
-            <div class="item-header">
-              <h3 class="item-title">{{ product.nama_inovasi }}</h3>
-              <span :class="['badge', getStatusClass(product.status_kurasi)]">{{ getStatusLabel(product.status_kurasi) }}</span>
-            </div>
-            <p class="item-desc text-muted">{{ product.deskripsi || 'Tidak ada deskripsi.' }}</p>
-            <div class="item-footer">
-              <span class="text-light">{{ product.tahun_inovasi }}</span>
-              <router-link :to="`/inisiator/pengajuan?id=${product.id}`" class="btn btn-outline btn-sm">Edit</router-link>
-            </div>
-          </div>
-          <div v-if="filteredProducts.length === 0" class="text-center py-4 text-muted" style="grid-column: 1 / -1;">
-            Tidak ada inovasi ditemukan.
-          </div>
+        <div v-if="filteredProducts.length === 0" class="text-center py-5 w-full">
+          Belum ada inovasi yang sesuai dengan kriteria.
         </div>
       </div>
     </main>
@@ -62,12 +53,15 @@
 <script setup>
 import Sidebar from '../../components/Sidebar.vue'
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../../services/api'
 
+const router = useRouter()
 const myProducts = ref([])
 const loading = ref(true)
-const searchQuery = ref('')
 const activeTab = ref('Semua')
+const tabs = ['Semua', 'Draft', 'Verifikasi', 'Selesai']
+const searchQuery = ref('')
 
 const filteredProducts = computed(() => {
   return myProducts.value.filter(p => {
@@ -86,28 +80,7 @@ const filteredProducts = computed(() => {
   })
 })
 
-function getStatusLabel(status) {
-  switch (status) {
-    case 'pending': return 'Verifikasi'
-    case 'approved': return 'Selesai'
-    case 'rejected': return 'Ditolak'
-    case 'draft': return 'Draft'
-    default: return status
-  }
-}
-
-function getStatusClass(status) {
-  switch (status) {
-    case 'pending': return 'badge-pending'
-    case 'approved': return 'badge-success'
-    case 'rejected': return 'badge-danger'
-    case 'draft': return 'badge-secondary'
-    default: return ''
-  }
-}
-
 async function loadMyProducts() {
-  loading.value = true
   try {
     const res = await api.get('/inisiator/products')
     myProducts.value = res.data
@@ -118,94 +91,120 @@ async function loadMyProducts() {
   }
 }
 
+function goToDetail(id) {
+  router.push(`/inisiator/products/${id}`)
+}
+
+function editProduct(id) {
+  router.push(`/inisiator/pengajuan?id=${id}`)
+}
+
 onMounted(loadMyProducts)
 </script>
 
 <style scoped>
-.stats-row {
+.header-with-action {
   display: flex;
-  gap: 1rem;
-}
-
-.stat-card {
-  flex: 1;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 8px;
-  padding: 1.25rem;
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--primary, #2563eb);
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  color: var(--text-light, #64748b);
-  margin-top: 0.25rem;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
 }
 
-.tab-btn {
+.tab-item {
   background: none;
-  border: 1px solid var(--border-color, #e2e8f0);
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  position: relative;
 }
 
-.tab-btn.active {
-  background: var(--primary, #2563eb);
-  color: #fff;
-  border-color: var(--primary, #2563eb);
+.tab-item.active {
+  color: var(--primary);
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--primary);
+}
+
+.search-bar {
+  max-width: 400px;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+}
+
+.input-with-icon .form-control {
+  padding-left: 40px;
 }
 
 .innovation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .innovation-item {
-  padding: 1.25rem;
+  padding: 1.5rem;
 }
 
 .item-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .item-title {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 700;
   margin: 0;
 }
 
-.item-desc {
-  font-size: 0.85rem;
-  margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.item-description {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
 }
 
 .item-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.item-meta {
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 </style>

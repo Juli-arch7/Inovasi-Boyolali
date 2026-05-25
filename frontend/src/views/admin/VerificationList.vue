@@ -4,45 +4,39 @@
     <main class="content-area">
       <div class="page-header mb-4">
         <h1 class="page-title">Verifikasi Inovasi</h1>
-        <p class="text-muted">Daftar produk inovasi yang menunggu verifikasi.</p>
+        <p class="text-muted">Kelola dan verifikasi ajuan inovasi yang masuk ke sistem.</p>
       </div>
-
-      <div v-if="actionMsg" :class="['alert', actionError ? 'alert-error' : 'alert-success', 'mb-4']">{{ actionMsg }}</div>
 
       <div class="card">
         <div class="table-container">
           <table>
             <thead>
               <tr>
+                <th>No</th>
                 <th>Nama Inovasi</th>
                 <th>Inisiator</th>
-                <th>Tahun</th>
+                <th>Kategori</th>
                 <th>Status</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in products" :key="product.id">
+              <tr v-for="(product, index) in products" :key="product.id">
+                <td>{{ index + 1 }}</td>
                 <td style="font-weight: 600;">{{ product.nama_inovasi }}</td>
                 <td>{{ product.inisiator_profile?.nama_inisiator || '-' }}</td>
-                <td>{{ product.tahun_inovasi }}</td>
+                <td><span class="badge-custom">{{ product.is_digital ? 'Digital' : 'Non Digital' }}</span></td>
                 <td>
                   <span :class="['badge', `badge-${product.status_kurasi}`]">
                     {{ product.status_kurasi }}
                   </span>
                 </td>
                 <td>
-                  <div style="display: flex; gap: 0.4rem;">
-                    <router-link :to="`/admin/verifikasi/${product.id}`" class="btn btn-outline btn-sm">Detail</router-link>
-                    <button class="btn btn-success btn-sm" @click="verify(product.id, 'approved')"
-                      :disabled="product.status_kurasi === 'approved'">Setujui</button>
-                    <button class="btn btn-danger btn-sm" @click="verify(product.id, 'rejected')"
-                      :disabled="product.status_kurasi === 'rejected'">Tolak</button>
-                  </div>
+                  <button class="btn btn-outline btn-sm" @click="goToDetail(product.id)">Detail</button>
                 </td>
               </tr>
               <tr v-if="products.length === 0">
-                <td colspan="5" class="text-center py-4">Belum ada ajuan produk.</td>
+                <td colspan="6" class="text-center py-4">Belum ada ajuan untuk diverifikasi.</td>
               </tr>
             </tbody>
           </table>
@@ -55,11 +49,11 @@
 <script setup>
 import Sidebar from '../../components/Sidebar.vue'
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../../services/api'
 
+const router = useRouter()
 const products = ref([])
-const actionMsg = ref('')
-const actionError = ref(false)
 
 async function loadProducts() {
   try {
@@ -70,18 +64,20 @@ async function loadProducts() {
   }
 }
 
-async function verify(id, status) {
-  actionMsg.value = ''
-  try {
-    await api.put(`/admin/products/${id}/verify`, { status_kurasi: status })
-    actionMsg.value = `Produk berhasil di-${status === 'approved' ? 'setujui' : 'tolak'}.`
-    actionError.value = false
-    await loadProducts()
-  } catch (e) {
-    actionMsg.value = e.response?.data?.message || 'Gagal mengubah status.'
-    actionError.value = true
-  }
+function goToDetail(id) {
+  router.push(`/admin/verifikasi/${id}`)
 }
 
 onMounted(loadProducts)
 </script>
+
+<style scoped>
+.badge-custom {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+</style>

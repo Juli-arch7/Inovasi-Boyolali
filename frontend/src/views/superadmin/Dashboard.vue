@@ -182,7 +182,6 @@ onMounted(loadAdmins)
   font-size: 0.75rem;
   font-weight: 600;
 }
-
 .delete-btn {
   color: var(--danger);
   border-color: var(--danger);
