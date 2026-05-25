@@ -1,9 +1,13 @@
 <template>
-  <div id="app">
+  <div class="app-container">
     <header class="navbar">
-      <router-link to="/" class="logo">🚀 Inovasi Daerah</router-link>
+      <router-link to="/" class="logo">
+        <span class="logo-icon">🏛️</span>
+        BAPPERIDA BOYOLALI
+      </router-link>
       <nav>
         <router-link to="/">Beranda</router-link>
+        <router-link to="/inisiator">Inovasi</router-link>
         <template v-if="auth.isAuthenticated">
           <router-link v-if="auth.userRole === 'superadmin'" to="/superadmin">Super Admin</router-link>
           <router-link v-if="auth.userRole === 'admin' || auth.userRole === 'superadmin'" to="/admin">Admin</router-link>
@@ -13,7 +17,9 @@
         <router-link v-else to="/login" class="btn btn-primary btn-sm">Masuk</router-link>
       </nav>
     </header>
-    <router-view />
+    <main class="main-content">
+      <router-view />
+    </main>
   </div>
 </template>
 
