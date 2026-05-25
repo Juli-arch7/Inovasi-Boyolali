@@ -41,4 +41,14 @@ class SuperAdminController extends Controller
 
         return response()->json(['message' => 'Admin created successfully', 'user' => $user->load('adminProfile')], 201);
     }
+
+    public function deleteAdmin($id)
+    {
+        $user = User::findOrFail($id);
+        if ($user->role === 'superadmin' && User::where('role', 'superadmin')->count() <= 1) {
+            return response()->json(['message' => 'Cannot delete the last superadmin'], 400);
+        }
+        $user->delete();
+        return response()->json(['message' => 'Admin deleted successfully']);
+    }
 }

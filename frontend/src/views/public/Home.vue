@@ -7,46 +7,116 @@
           <input type="text" v-model="searchQuery" placeholder="Cari Inovasi..." class="search-input">
           <button class="btn btn-primary search-btn">CARI</button>
         </div>
+        <div class="category-pills">
+          <button 
+            class="pill-btn" 
+            :class="{ active: filters.category === '' }"
+            @click="filters.category = ''"
+          >Semua</button>
+          <button 
+            class="pill-btn" 
+            :class="{ active: filters.category === 'Pelayanan Publik' }"
+            @click="filters.category = 'Pelayanan Publik'"
+          >Pelayanan Publik</button>
+          <button 
+            class="pill-btn" 
+            :class="{ active: filters.category === 'Tata Kelola Pemerintahan' }"
+            @click="filters.category = 'Tata Kelola Pemerintahan'"
+          >Tata Kelola Pemerintahan</button>
+          <button 
+            class="pill-btn" 
+            :class="{ active: filters.category === 'Inovasi Daerah Lainnya' }"
+            @click="filters.category = 'Inovasi Daerah Lainnya'"
+          >Inovasi Daerah Lainnya</button>
+        </div>
       </div>
     </section>
 
     <div class="container main-layout">
       <aside class="filter-sidebar">
         <div class="filter-group">
-          <h3>Filter</h3>
+          <div class="filter-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6H20M7 12H17M10 18H14" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3>Filter</h3>
+          </div>
+          <hr class="filter-divider" />
+          
           <div class="filter-item">
             <label>Kategori</label>
             <select v-model="filters.category" class="form-control">
-              <option value="">Semua Kategori</option>
-              <option value="digital">Digital</option>
-              <option value="non-digital">Non Digital</option>
+              <option value="">Semua</option>
+              <option value="Pelayanan Publik">Pelayanan Publik</option>
+              <option value="Tata Kelola Pemerintahan">Tata Kelola Pemerintahan</option>
+              <option value="Inovasi Daerah Lainnya">Inovasi Daerah Lainnya</option>
             </select>
           </div>
+          
+          <div class="filter-item">
+            <label>Kecamatan</label>
+            <select v-model="filters.kecamatan" class="form-control">
+              <option value="">Pilih Kecamatan</option>
+              <option value="Ampel">Ampel</option>
+              <option value="Andong">Andong</option>
+              <option value="Banyudono">Banyudono</option>
+              <option value="Boyolali">Boyolali</option>
+              <option value="Cepogo">Cepogo</option>
+              <option value="Gladagsari">Gladagsari</option>
+              <option value="Juwangi">Juwangi</option>
+              <option value="Karanggede">Karanggede</option>
+              <option value="Kemusu">Kemusu</option>
+              <option value="Klego">Klego</option>
+              <option value="Mojosongo">Mojosongo</option>
+              <option value="Musuk">Musuk</option>
+              <option value="Ngemplak">Ngemplak</option>
+              <option value="Nogosari">Nogosari</option>
+              <option value="Sambi">Sambi</option>
+              <option value="Sawit">Sawit</option>
+              <option value="Selo">Selo</option>
+              <option value="Simo">Simo</option>
+              <option value="Tamansari">Tamansari</option>
+              <option value="Teras">Teras</option>
+              <option value="Wonosegoro">Wonosegoro</option>
+              <option value="Wonosamudro">Wonosamudro</option>
+            </select>
+          </div>
+          
+          <div class="filter-item">
+            <label>Kelurahan</label>
+            <select v-model="filters.kelurahan" class="form-control">
+              <option value="">Pilih Kelurahan</option>
+              <option value="Boyolali">Boyolali</option>
+              <option value="Siswodipuran">Siswodipuran</option>
+              <option value="Banaran">Banaran</option>
+              <option value="Bayem">Bayem</option>
+              <option value="Pulisen">Pulisen</option>
+              <option value="Kalicacing">Kalicacing</option>
+            </select>
+          </div>
+          
+          <div class="filter-item">
+            <label>Tahun</label>
+            <select v-model="filters.tahun" class="form-control">
+              <option value="">Pilih Tahun</option>
+              <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+            </select>
+          </div>
+          
           <div class="filter-item">
             <label>Bentuk Inovasi</label>
-            <select v-model="filters.bentuk" class="form-control">
-              <option value="">Semua Bentuk</option>
-            </select>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="filters.bentuk" value="digital">
+                Digital
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="filters.bentuk" value="non-digital">
+                Non-Digital
+              </label>
+            </div>
           </div>
-          <div class="filter-item">
-            <label>Kematangan</label>
-            <select v-model="filters.kematangan" class="form-control">
-              <option value="">Semua</option>
-            </select>
-          </div>
-          <div class="filter-item">
-            <label>Waktu Uji Coba</label>
-            <select v-model="filters.waktu" class="form-control">
-              <option value="">Semua</option>
-            </select>
-          </div>
-          <div class="filter-item">
-            <label>Urutkan</label>
-            <select v-model="filters.sort" class="form-control">
-              <option value="newest">Terbaru</option>
-              <option value="oldest">Terlama</option>
-            </select>
-          </div>
+          
           <button class="btn btn-primary w-full mt-4" @click="applyFilters">Terapkan Filter</button>
         </div>
       </aside>
@@ -94,16 +164,73 @@ const loading = ref(true)
 const searchQuery = ref('')
 const filters = ref({
   category: '',
-  bentuk: '',
+  kecamatan: '',
+  kelurahan: '',
+  tahun: '',
+  bentuk: [],
   kematangan: '',
   waktu: '',
   sort: 'newest'
 })
 
 const filteredProducts = computed(() => {
-  return products.value.filter(p => 
-    p.nama_inovasi.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  return products.value.filter(p => {
+    // 1. Search Query
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      const matchName = p.nama_inovasi.toLowerCase().includes(q)
+      const matchDesc = p.deskripsi && p.deskripsi.toLowerCase().includes(q)
+      const matchOpd = p.opd?.nama_opd && p.opd.nama_opd.toLowerCase().includes(q)
+      if (!matchName && !matchDesc && !matchOpd) return false
+    }
+
+    // 2. Kategori
+    if (filters.value.category) {
+      const bName = p.bentuk_inovasi?.nama_bentuk || ''
+      if (filters.value.category === 'Pelayanan Publik' && !bName.includes('Pelayanan Publik')) return false
+      if (filters.value.category === 'Tata Kelola Pemerintahan' && !bName.includes('Tata Kelola')) return false
+      if (filters.value.category === 'Inovasi Daerah Lainnya' && (bName.includes('Pelayanan Publik') || bName.includes('Tata Kelola'))) return false
+    }
+
+    // 3. Kecamatan
+    if (filters.value.kecamatan) {
+      const matchKecName = p.inisiator_profile?.kelurahan?.kecamatan?.nama_kecamatan === filters.value.kecamatan
+      const matchKecId = p.inisiator_profile?.kelurahan?.kecamatan?.id === Number(filters.value.kecamatan)
+      if (!matchKecName && !matchKecId) return false
+    }
+
+    // 4. Kelurahan
+    if (filters.value.kelurahan) {
+      const matchKelName = p.inisiator_profile?.kelurahan?.nama_kelurahan === filters.value.kelurahan
+      const matchKelId = p.inisiator_profile?.kelurahan?.id === Number(filters.value.kelurahan)
+      if (!matchKelName && !matchKelId) return false
+    }
+
+    // 5. Tahun
+    if (filters.value.tahun) {
+      if (p.tahun_inovasi !== Number(filters.value.tahun)) return false
+    }
+
+    // 6. Bentuk (Digital / Non-Digital Checkbox)
+    if (filters.value.bentuk && filters.value.bentuk.length > 0) {
+      const isDig = !!p.is_digital
+      const wantsDigital = filters.value.bentuk.includes('digital')
+      const wantsNonDigital = filters.value.bentuk.includes('non-digital')
+      if (wantsDigital && !wantsNonDigital && !isDig) return false
+      if (!wantsDigital && wantsNonDigital && isDig) return false
+    }
+
+    return true
+  })
+})
+
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  const list = [];
+  for (let y = currentYear; y >= 2015; y--) {
+    list.push(y);
+  }
+  return list;
 })
 
 onMounted(async () => {
@@ -118,7 +245,7 @@ onMounted(async () => {
 })
 
 function applyFilters() {
-  // Logic to apply filters
+  // Computed property filteredProducts takes care of reactive rendering dynamically!
 }
 
 function goToDetail(id) {
@@ -175,6 +302,37 @@ function goToDetail(id) {
   padding: 0.5rem 2rem;
 }
 
+.category-pills {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.pill-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 99px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-white, #ffffff);
+  color: var(--text-color, #333333);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill-btn:hover {
+  border-color: var(--primary, #0056b3);
+  color: var(--primary, #0056b3);
+}
+
+.pill-btn.active {
+  background: #f0f7ff;
+  border-color: var(--primary, #0056b3);
+  color: var(--primary, #0056b3);
+}
+
 .main-layout {
   display: flex;
   gap: 2rem;
@@ -196,10 +354,48 @@ function goToDetail(id) {
   top: 90px;
 }
 
-.filter-group h3 {
+.filter-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-header h3 {
   font-size: 1.125rem;
   font-weight: 700;
+  margin: 0;
+}
+
+.filter-divider {
+  border: 0;
+  border-top: 1px solid var(--border-color, #e2e8f0);
   margin-bottom: 1.5rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-color, #333);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  accent-color: var(--primary, #2563eb);
 }
 
 .filter-item {
@@ -253,6 +449,7 @@ function goToDetail(id) {
   margin-bottom: 1.25rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

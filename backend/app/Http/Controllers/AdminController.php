@@ -27,4 +27,26 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Product status updated', 'product' => $product]);
     }
+
+    public function getProductDetail($id)
+    {
+        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi'])->findOrFail($id);
+        return response()->json($product);
+    }
+
+    public function getUsers()
+    {
+        $users = \App\Models\User::with(['inisiatorProfile', 'adminProfile'])->get();
+        return response()->json($users);
+    }
+
+    public function deleteUser($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        if ($user->role === 'superadmin' && \App\Models\User::where('role', 'superadmin')->count() <= 1) {
+            return response()->json(['message' => 'Cannot delete the last superadmin'], 400);
+        }
+        $user->delete();
+        return response()->json(['message' => 'User deleted successfully']);
+    }
 }

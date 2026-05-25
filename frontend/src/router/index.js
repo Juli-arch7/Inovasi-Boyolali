@@ -14,6 +14,8 @@ import SuperAdminDashboard from '../views/superadmin/Dashboard.vue'
 import AdminDashboard from '../views/admin/Dashboard.vue'
 import VerificationList from '../views/admin/VerificationList.vue'
 import VerificationDetail from '../views/admin/VerificationDetail.vue'
+import AdminProducts from '../views/admin/Products.vue'
+import AdminUsers from '../views/admin/Users.vue'
 import InisiatorDashboard from '../views/inisiator/Dashboard.vue'
 import InnovationForm from '../views/inisiator/InnovationForm.vue'
 
@@ -44,6 +46,18 @@ const routes = [
     path: '/admin/verifikasi/:id',
     name: 'AdminVerificationDetail',
     component: VerificationDetail,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/products',
+    name: 'AdminProducts',
+    component: AdminProducts,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/users',
+    name: 'AdminUsers',
+    component: AdminUsers,
     meta: { requiresAuth: true, role: 'admin' }
   },
   {
