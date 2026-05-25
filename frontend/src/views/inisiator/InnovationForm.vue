@@ -143,7 +143,7 @@
           <!-- File Preview -->
           <div v-if="selectedFile || existingFile" class="file-preview-card mt-3">
             <div class="file-info">
-              <span class="file-icon">📄</span>
+              <span class="file-icon"><i class='bx bx-file'></i></span>
               <div>
                 <p class="file-name">{{ selectedFile ? selectedFile.name : 'Dokumen Terunggah' }}</p>
                 <p v-if="selectedFile" class="file-size">{{ formatFileSize(selectedFile.size) }}</p>

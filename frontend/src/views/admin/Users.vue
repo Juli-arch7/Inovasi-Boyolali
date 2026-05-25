@@ -104,9 +104,9 @@ const filteredUsers = computed(() => {
   return users.value.filter(user => {
     const query = searchQuery.value.toLowerCase()
     const matchesSearch = 
-      (user.name && user.name.toLowerCase().includes(query)) ||
-      user.username.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query)
+      user.name?.toLowerCase().includes(query) ||
+      user.username?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query)
     
     const matchesRole = !filterRole.value || user.role === filterRole.value
     return matchesSearch && matchesRole

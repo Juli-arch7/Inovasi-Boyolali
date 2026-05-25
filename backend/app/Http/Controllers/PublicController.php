@@ -14,6 +14,7 @@ class PublicController extends Controller
     public function getCuratedProducts()
     {
         $products = ProdukInovasi::where('status_kurasi', 'approved')
+            ->where('is_active', true)
             ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi'])
             ->get();
         return response()->json($products);

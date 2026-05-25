@@ -55,30 +55,9 @@
           
           <div class="filter-item">
             <label>Kecamatan</label>
-            <select v-model="filters.kecamatan" class="form-control">
+            <select v-model="filters.kecamatan" class="form-control" @change="filters.kelurahan = ''">
               <option value="">Pilih Kecamatan</option>
-              <option value="Ampel">Ampel</option>
-              <option value="Andong">Andong</option>
-              <option value="Banyudono">Banyudono</option>
-              <option value="Boyolali">Boyolali</option>
-              <option value="Cepogo">Cepogo</option>
-              <option value="Gladagsari">Gladagsari</option>
-              <option value="Juwangi">Juwangi</option>
-              <option value="Karanggede">Karanggede</option>
-              <option value="Kemusu">Kemusu</option>
-              <option value="Klego">Klego</option>
-              <option value="Mojosongo">Mojosongo</option>
-              <option value="Musuk">Musuk</option>
-              <option value="Ngemplak">Ngemplak</option>
-              <option value="Nogosari">Nogosari</option>
-              <option value="Sambi">Sambi</option>
-              <option value="Sawit">Sawit</option>
-              <option value="Selo">Selo</option>
-              <option value="Simo">Simo</option>
-              <option value="Tamansari">Tamansari</option>
-              <option value="Teras">Teras</option>
-              <option value="Wonosegoro">Wonosegoro</option>
-              <option value="Wonosamudro">Wonosamudro</option>
+              <option v-for="kec in metadata.kecamatans" :key="kec.id" :value="kec.nama_kecamatan">{{ kec.nama_kecamatan }}</option>
             </select>
           </div>
           
@@ -86,12 +65,7 @@
             <label>Kelurahan</label>
             <select v-model="filters.kelurahan" class="form-control">
               <option value="">Pilih Kelurahan</option>
-              <option value="Boyolali">Boyolali</option>
-              <option value="Siswodipuran">Siswodipuran</option>
-              <option value="Banaran">Banaran</option>
-              <option value="Bayem">Bayem</option>
-              <option value="Pulisen">Pulisen</option>
-              <option value="Kalicacing">Kalicacing</option>
+              <option v-for="kel in filteredKelurahansOptions" :key="kel.id" :value="kel.nama_kelurahan">{{ kel.nama_kelurahan }}</option>
             </select>
           </div>
           
@@ -133,7 +107,11 @@
         <div v-else class="grid grid-cols-3">
           <div class="innovation-card card" v-for="product in filteredProducts" :key="product.id" @click="goToDetail(product.id)">
             <div class="card-image">
-              <img :src="product.thumbnail || 'https://via.placeholder.com/300x200'" alt="Innovation Thumbnail">
+              <img
+                :src="getProductImage(product)"
+                alt="Innovation Thumbnail"
+                @error="handleImgError($event)"
+              >
             </div>
             <div class="card-body">
               <div class="card-meta">
@@ -142,8 +120,8 @@
               <h3 class="card-title">{{ product.nama_inovasi }}</h3>
               <p class="card-description">{{ product.deskripsi || 'Tidak ada deskripsi.' }}</p>
               <div class="card-footer">
-                <span class="view-count">👁️ 100</span>
-                <span class="date">📅 12 Jan 2024</span>
+                <span class="opd-name"><i class='bx bx-buildings'></i> {{ product.opd?.nama_opd || '-' }}</span>
+                <span class="date"><i class='bx bx-calendar'></i> {{ product.tahun_inovasi }}</span>
               </div>
             </div>
           </div>
@@ -173,13 +151,27 @@ const filters = ref({
   sort: 'newest'
 })
 
+const metadata = ref({
+  kecamatans: [],
+  kelurahans: []
+})
+
+const filteredKelurahansOptions = computed(() => {
+  if (!filters.value.kecamatan) return metadata.value.kelurahans
+  const kec = metadata.value.kecamatans.find(k => k.nama_kecamatan === filters.value.kecamatan)
+  if (kec) {
+    return metadata.value.kelurahans.filter(k => k.id_kecamatan === kec.id)
+  }
+  return metadata.value.kelurahans
+})
+
 const filteredProducts = computed(() => {
   return products.value.filter(p => {
     // 1. Search Query
     if (searchQuery.value) {
       const q = searchQuery.value.toLowerCase()
-      const matchName = p.nama_inovasi.toLowerCase().includes(q)
-      const matchDesc = p.deskripsi && p.deskripsi.toLowerCase().includes(q)
+      const matchName = p.nama_inovasi?.toLowerCase().includes(q)
+      const matchDesc = p.deskripsi?.toLowerCase().includes(q)
       const matchOpd = p.opd?.nama_opd && p.opd.nama_opd.toLowerCase().includes(q)
       if (!matchName && !matchDesc && !matchOpd) return false
     }
@@ -242,6 +234,13 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+
+  try {
+    const resMeta = await api.get('/public/metadata')
+    metadata.value = resMeta.data
+  } catch (e) {
+    console.error('Failed to load metadata', e)
+  }
 })
 
 function applyFilters() {
@@ -250,6 +249,22 @@ function applyFilters() {
 
 function goToDetail(id) {
   router.push(`/products/${id}`)
+}
+
+function getProductImage(product) {
+  if (!product.media_inovasi || product.media_inovasi.length === 0) {
+    return 'https://placehold.co/300x200/e2e8f0/64748b?text=No+Image'
+  }
+  const primary = product.media_inovasi.find(m => m.is_primary && m.jenis_media !== 'link')
+  const firstPhoto = product.media_inovasi.find(m => m.jenis_media !== 'link')
+  const media = primary || firstPhoto || product.media_inovasi[0]
+  if (!media || !media.isi_konten) return 'https://placehold.co/300x200/e2e8f0/64748b?text=No+Image'
+  if (media.isi_konten.startsWith('http')) return media.isi_konten
+  return `http://localhost:8000${media.isi_konten}`
+}
+
+function handleImgError(e) {
+  e.target.src = 'https://placehold.co/300x200/e2e8f0/64748b?text=No+Image'
 }
 </script>
 

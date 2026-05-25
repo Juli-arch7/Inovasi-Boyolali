@@ -2,7 +2,7 @@
   <div class="app-container">
     <header class="navbar">
       <router-link to="/" class="logo">
-        <span class="logo-icon">🏛️</span>
+        <span class="logo-icon"><i class='bx bxs-institution'></i></span>
         BAPPERIDA BOYOLALI
       </router-link>
       <nav>

@@ -10,8 +10,27 @@
 
       <div class="detail-layout">
         <div class="detail-main">
+          <!-- Main Banner Image -->
           <div class="banner-card card mb-4">
-            <img :src="product.banner || 'https://via.placeholder.com/800x400'" alt="Innovation Banner" class="banner-img">
+            <img
+              :src="mainImage"
+              alt="Innovation Banner"
+              class="banner-img"
+              @error="handleImgError($event)"
+            >
+          </div>
+
+          <!-- Thumbnail Gallery -->
+          <div v-if="allMediaImages.length > 1" class="gallery-strip mb-4">
+            <img
+              v-for="(img, idx) in allMediaImages"
+              :key="idx"
+              :src="getImageUrl(img.isi_konten)"
+              :alt="'Foto ' + (idx + 1)"
+              :class="['thumb-img', { active: selectedImgIdx === idx }]"
+              @click="selectedImgIdx = idx"
+              @error="$event.target.style.display = 'none'"
+            >
           </div>
 
           <div class="description-section card">
@@ -23,15 +42,6 @@
         </div>
 
         <aside class="detail-sidebar">
-          <div class="gallery-card card mb-4">
-            <h3 class="sidebar-title">Galeri</h3>
-            <div class="gallery-grid">
-              <img src="https://via.placeholder.com/150" alt="Gallery 1">
-              <img src="https://via.placeholder.com/150" alt="Gallery 2">
-              <img src="https://via.placeholder.com/150" alt="Gallery 3">
-            </div>
-          </div>
-
           <div class="admin-info-card card">
             <h3 class="sidebar-title">Informasi Administratif</h3>
             <div class="info-list">
@@ -60,7 +70,13 @@
                 <span>{{ product.tahun_inovasi }}</span>
               </div>
             </div>
-            <button class="btn btn-primary w-full mt-4">UNDUH PROPOSAL</button>
+
+            <!-- Marketplace Link -->
+            <div v-if="marketplaceLink" class="mt-4">
+              <a :href="marketplaceLink" target="_blank" rel="noopener" class="btn btn-primary w-full">
+                <i class='bx bx-link-external'></i> Lihat di Marketplace
+              </a>
+            </div>
           </div>
         </aside>
       </div>
@@ -69,13 +85,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../../services/api'
 
 const route = useRoute()
 const product = ref(null)
 const loading = ref(true)
+const selectedImgIdx = ref(0)
+
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')
+
+function getImageUrl(path) {
+  if (!path) return 'https://placehold.co/800x400/e2e8f0/64748b?text=No+Image'
+  if (path.startsWith('http')) return path
+  return `${BASE_URL}${path}`
+}
+
+function handleImgError(e) {
+  e.target.src = 'https://placehold.co/800x400/e2e8f0/64748b?text=No+Image'
+}
+
+const allMediaImages = computed(() => {
+  if (!product.value?.media_inovasi) return []
+  return product.value.media_inovasi.filter(m => m.jenis_media !== 'link')
+})
+
+const mainImage = computed(() => {
+  if (allMediaImages.value.length === 0) return 'https://placehold.co/800x400/e2e8f0/64748b?text=No+Image'
+  return getImageUrl(allMediaImages.value[selectedImgIdx.value]?.isi_konten)
+})
+
+const marketplaceLink = computed(() => {
+  if (!product.value?.media_inovasi) return null
+  const link = product.value.media_inovasi.find(m => m.jenis_media === 'link')
+  return link?.isi_konten || null
+})
 
 onMounted(async () => {
   try {
@@ -120,6 +165,29 @@ onMounted(async () => {
   width: 100%;
   height: 400px;
   object-fit: cover;
+  display: block;
+}
+
+/* Thumbnail Gallery Strip */
+.gallery-strip {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.thumb-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.thumb-img.active,
+.thumb-img:hover {
+  border-color: var(--primary);
 }
 
 .section-title, .sidebar-title {
@@ -133,19 +201,6 @@ onMounted(async () => {
 .description-text {
   line-height: 1.8;
   color: var(--text-muted);
-}
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.gallery-grid img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 4px;
 }
 
 .info-list {

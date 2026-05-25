@@ -5,13 +5,13 @@
     </div>
     <nav class="sidebar-nav">
       <router-link v-for="item in menuItems" :key="item.path" :to="item.path" class="sidebar-link">
-        <span class="icon">{{ item.icon }}</span>
-        {{ item.label }}
+        <i :class="item.icon + ' nav-icon'"></i>
+        <span class="link-text">{{ item.label }}</span>
       </router-link>
     </nav>
     <div class="sidebar-footer mt-auto">
-      <button class="btn btn-outline w-full" @click="handleLogout">
-        <span class="icon">🚪</span> Logout
+      <button class="btn btn-outline w-full logout-btn" @click="handleLogout">
+        <i class="bx bx-log-out nav-icon"></i> <span class="link-text">Logout</span>
       </button>
     </div>
   </aside>
@@ -37,27 +37,23 @@ const roleName = computed(() => {
 const menuItems = computed(() => {
   if (auth.userRole === 'inisiator') {
     return [
-      { path: '/inisiator', label: 'Inovasi Saya', icon: '💡' },
-      { path: '/inisiator/pengajuan', label: 'Pengajuan Inovasi', icon: '📝' },
+      { path: '/inisiator', label: 'Inovasi Saya', icon: 'bx bx-bulb' },
+      { path: '/inisiator/pengajuan', label: 'Pengajuan Inovasi', icon: 'bx bx-edit' },
     ]
   } else if (auth.userRole === 'superadmin') {
     return [
-      { path: '/superadmin', label: 'Admin', icon: '👥' },
-      { path: '/admin/users', label: 'Pengguna', icon: '👥' },
-      { path: '/admin', label: 'Dashboard', icon: '📊' },
-      { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
-      { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
+      { path: '/superadmin', label: 'Admin', icon: 'bx bx-shield-quarter' },
+      { path: '/admin/users', label: 'Pengguna', icon: 'bx bx-user' },
+      { path: '/admin', label: 'Dashboard', icon: 'bx bx-grid-alt' },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: 'bx bx-check-shield' },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: 'bx bx-box' },
     ]
   } else if (auth.userRole === 'admin') {
     return [
-      { path: '/admin', label: 'Dashboard', icon: '📊' },
-      { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
-      { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
+      { path: '/admin', label: 'Dashboard', icon: 'bx bx-grid-alt' },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: 'bx bx-check-shield' },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: 'bx bx-box' },
     ]
-    if (auth.userRole === 'superadmin') {
-      items.push({ path: '/superadmin', label: 'Manajemen Admin', icon: '🛠️' })
-    }
-    return items
   }
   return []
 })
@@ -69,8 +65,14 @@ async function handleLogout() {
 </script>
 
 <style scoped>
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .sidebar-header {
-  padding: 0 1rem;
+  padding: 1rem 1rem 0;
 }
 
 .user-role {
@@ -79,10 +81,39 @@ async function handleLogout() {
   color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-left: 0.5rem;
 }
 
 .sidebar-footer {
   padding: 1rem;
-  border-top: 1px solid var(--border-color);
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+  margin-right: 0.25rem;
+  line-height: 1;
+}
+
+.link-text {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  color: var(--text-muted);
+  border: none;
+  background: transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.logout-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 </style>

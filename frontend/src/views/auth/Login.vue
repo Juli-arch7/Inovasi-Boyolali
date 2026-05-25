@@ -10,16 +10,16 @@
         <div class="form-group">
           <label for="email">Email/Username</label>
           <div class="input-with-icon">
-            <span class="icon">👤</span>
+            <i class='bx bx-user icon'></i>
             <input id="email" type="text" class="form-control" v-model="email" placeholder="Masukkan Email atau Username" required />
           </div>
         </div>
         <div class="form-group">
           <label for="password">Password</label>
           <div class="input-with-icon">
-            <span class="icon">🔒</span>
+            <i class='bx bx-lock-alt icon'></i>
             <input id="password" :type="showPassword ? 'text' : 'password'" class="form-control" v-model="password" placeholder="Masukkan Password" required />
-            <span class="icon-eye" @click="showPassword = !showPassword">👁️</span>
+            <i :class="showPassword ? 'bx bx-hide icon-eye' : 'bx bx-show icon-eye'" @click="showPassword = !showPassword"></i>
           </div>
         </div>
         

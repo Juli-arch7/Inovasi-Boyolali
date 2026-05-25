@@ -29,9 +29,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/superadmin/admins/{id}', [SuperAdminController::class, 'deleteAdmin']);
 
     // Admin Routes
+    Route::get('/admin/stats', [AdminController::class, 'getStats']);
     Route::get('/admin/products', [AdminController::class, 'getSubmissions']);
     Route::get('/admin/products/{id}', [AdminController::class, 'getProductDetail']);
     Route::put('/admin/products/{id}/verify', [AdminController::class, 'verifyProduct']);
+    Route::put('/admin/products/{id}/toggle-active', [AdminController::class, 'toggleActive']);
     Route::get('/admin/users', [AdminController::class, 'getUsers']);
     Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
 

@@ -9,21 +9,21 @@
 
       <div class="grid grid-cols-3 mb-4">
         <div class="stat-card card">
-          <div class="stat-icon">📊</div>
+          <div class="stat-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
           <div class="stat-info">
             <span class="stat-label">Total Inovasi</span>
             <h2 class="stat-value">124.500</h2>
           </div>
         </div>
         <div class="stat-card card">
-          <div class="stat-icon">🏛️</div>
+          <div class="stat-icon"><i class='bx bx-building-house'></i></div>
           <div class="stat-info">
             <span class="stat-label">Total OPD</span>
             <h2 class="stat-value">8.402</h2>
           </div>
         </div>
         <div class="stat-card card">
-          <div class="stat-icon">🏢</div>
+          <div class="stat-icon"><i class='bx bx-buildings'></i></div>
           <div class="stat-info">
             <span class="stat-label">Unit Kerja</span>
             <h2 class="stat-value">342</h2>
@@ -88,7 +88,8 @@ onMounted(loadProducts)
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  color: var(--primary);
 }
 
 .stat-label {
