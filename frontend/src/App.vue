@@ -7,10 +7,10 @@
       </router-link>
       <nav>
         <router-link to="/">Beranda</router-link>
-        <router-link to="/inisiator">Inovasi</router-link>
+        <router-link to="/inovasi">Inovasi</router-link>
         <template v-if="auth.isAuthenticated">
           <router-link v-if="auth.userRole === 'superadmin'" to="/superadmin">Super Admin</router-link>
-          <router-link v-if="auth.userRole === 'admin' || auth.userRole === 'superadmin'" to="/admin">Admin</router-link>
+          <router-link v-if="auth.userRole === 'admin'" to="/admin">Admin</router-link>
           <router-link v-if="auth.userRole === 'inisiator'" to="/inisiator">Dashboard</router-link>
           <button class="btn btn-outline btn-sm" @click="handleLogout">Logout</button>
         </template>

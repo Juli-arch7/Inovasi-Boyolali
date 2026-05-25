@@ -40,12 +40,19 @@ const menuItems = computed(() => {
       { path: '/inisiator', label: 'Inovasi Saya', icon: '💡' },
       { path: '/inisiator/pengajuan', label: 'Pengajuan Inovasi', icon: '📝' },
     ]
-  } else if (auth.userRole === 'admin' || auth.userRole === 'superadmin') {
-    const items = [
+  } else if (auth.userRole === 'superadmin') {
+    return [
+      { path: '/superadmin', label: 'Admin', icon: '👥' },
+      { path: '/admin/users', label: 'Pengguna', icon: '👥' },
       { path: '/admin', label: 'Dashboard', icon: '📊' },
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
       { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
-      { path: '/admin/users', label: 'Pengguna', icon: '👥' },
+    ]
+  } else if (auth.userRole === 'admin') {
+    return [
+      { path: '/admin', label: 'Dashboard', icon: '📊' },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: '✅' },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: '📦' },
     ]
     if (auth.userRole === 'superadmin') {
       items.push({ path: '/superadmin', label: 'Manajemen Admin', icon: '🛠️' })

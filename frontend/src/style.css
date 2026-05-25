@@ -101,7 +101,7 @@ a {
 }
 
 .navbar nav a:hover,
-.navbar nav a.router-link-active {
+.navbar nav a.router-link-exact-active {
   color: var(--primary);
 }
 
