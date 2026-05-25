@@ -18,51 +18,52 @@ import InisiatorDashboard from '../views/inisiator/Dashboard.vue'
 import InnovationForm from '../views/inisiator/InnovationForm.vue'
 
 const routes = [
-  { path: '/', name: 'Home', component: Home },
-  { path: '/products/:id', name: 'ProductDetail', component: ProductDetail },
-  { path: '/login', name: 'Login', component: Login },
-  { path: '/register', name: 'Register', component: Register },
+  { path: '/', name: 'Home', component: Home, meta: { title: 'Beranda' } },
+  { path: '/inovasi', name: 'Inovasi', component: Home, meta: { title: 'Inovasi' } },
+  { path: '/products/:id', name: 'ProductDetail', component: ProductDetail, meta: { title: 'Detail Inovasi' } },
+  { path: '/login', name: 'Login', component: Login, meta: { title: 'Login' } },
+  { path: '/register', name: 'Register', component: Register, meta: { title: 'Register' } },
   {
     path: '/superadmin',
     name: 'SuperAdmin',
     component: SuperAdminDashboard,
-    meta: { requiresAuth: true, role: 'superadmin' }
+    meta: { requiresAuth: true, role: 'superadmin', title: 'Dashboard Super Admin' }
   },
   {
     path: '/admin',
     name: 'Admin',
     component: AdminDashboard,
-    meta: { requiresAuth: true, role: 'admin' }
+    meta: { requiresAuth: true, role: 'admin', title: 'Dashboard Admin' }
   },
   {
     path: '/admin/verifikasi',
     name: 'AdminVerificationList',
     component: VerificationList,
-    meta: { requiresAuth: true, role: 'admin' }
+    meta: { requiresAuth: true, role: 'admin', title: 'Daftar Verifikasi' }
   },
   {
     path: '/admin/verifikasi/:id',
     name: 'AdminVerificationDetail',
     component: VerificationDetail,
-    meta: { requiresAuth: true, role: 'admin' }
+    meta: { requiresAuth: true, role: 'admin', title: 'Detail Verifikasi' }
   },
   {
     path: '/inisiator',
     name: 'Inisiator',
     component: InisiatorDashboard,
-    meta: { requiresAuth: true, role: 'inisiator' }
+    meta: { requiresAuth: true, role: 'inisiator', title: 'Dashboard Inisiator' }
   },
   {
     path: '/inisiator/pengajuan',
     name: 'InisiatorInnovationForm',
     component: InnovationForm,
-    meta: { requiresAuth: true, role: 'inisiator' }
+    meta: { requiresAuth: true, role: 'inisiator', title: 'Pengajuan Inovasi' }
   },
   {
     path: '/inisiator/products/:id',
     name: 'InisiatorProductDetail',
     component: ProductDetail,
-    meta: { requiresAuth: true, role: 'inisiator' }
+    meta: { requiresAuth: true, role: 'inisiator', title: 'Detail Inovasi' }
   },
 ]
 
@@ -72,6 +73,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // Update document title berdasarkan meta title
+  document.title = to.meta.title ? `${to.meta.title} - Bapperida Boyolali` : 'Bapperida Boyolali'
+
   const auth = useAuthStore()
   const token = localStorage.getItem('auth_token')
   const userStr = localStorage.getItem('user')
@@ -92,7 +96,7 @@ router.beforeEach((to, from, next) => {
     if (isAdminPath && !isUserAdmin) {
       return next({ name: 'Home' })
     }
-    
+
     // Specifically check for inisiator role
     if (to.meta.role === 'inisiator' && role !== 'inisiator') {
       return next({ name: 'Home' })
