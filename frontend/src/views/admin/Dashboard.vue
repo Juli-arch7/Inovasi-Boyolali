@@ -1,76 +1,64 @@
 <template>
-  <div class="page fade-in">
-    <div class="page-header">
-      <h1>Admin Dashboard</h1>
-      <p>Verifikasi dan kelola produk inovasi yang diajukan</p>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value">{{ products.length }}</div>
-        <div class="stat-label">Total Ajuan</div>
+  <div class="dashboard-layout">
+    <Sidebar />
+    <main class="content-area">
+      <div class="page-header mb-4">
+        <h1 class="page-title">Dashboard Overview</h1>
+        <p class="text-muted">Pantau data dan statistik inovasi terbaru di Kabupaten Boyolali.</p>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ products.filter(p => p.status_kurasi === 'pending').length }}</div>
-        <div class="stat-label">Menunggu Review</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ products.filter(p => p.status_kurasi === 'approved').length }}</div>
-        <div class="stat-label">Disetujui</div>
-      </div>
-    </div>
 
-    <div v-if="actionMsg" :class="['alert', actionError ? 'alert-error' : 'alert-success']">{{ actionMsg }}</div>
+      <div class="grid grid-cols-3 mb-4">
+        <div class="stat-card card">
+          <div class="stat-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
+          <div class="stat-info">
+            <span class="stat-label">Total Inovasi</span>
+            <h2 class="stat-value">124.500</h2>
+          </div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-icon"><i class='bx bx-building-house'></i></div>
+          <div class="stat-info">
+            <span class="stat-label">Total OPD</span>
+            <h2 class="stat-value">8.402</h2>
+          </div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-icon"><i class='bx bx-buildings'></i></div>
+          <div class="stat-info">
+            <span class="stat-label">Unit Kerja</span>
+            <h2 class="stat-value">342</h2>
+          </div>
+        </div>
+      </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Nama Inovasi</th>
-            <th>Inisiator</th>
-            <th>OPD</th>
-            <th>Tahun</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="product in products" :key="product.id">
-            <td style="font-weight:500">{{ product.nama_inovasi }}</td>
-            <td>{{ product.inisiator_profile?.nama_inisiator || '-' }}</td>
-            <td>{{ product.opd?.nama_opd || '-' }}</td>
-            <td>{{ product.tahun_inovasi }}</td>
-            <td>
-              <span :class="['badge', `badge-${product.status_kurasi}`]">
-                {{ product.status_kurasi }}
-              </span>
-            </td>
-            <td>
-              <div style="display:flex; gap:0.4rem">
-                <button class="btn btn-success btn-sm" @click="verify(product.id, 'approved')"
-                  :disabled="product.status_kurasi === 'approved'">Setujui</button>
-                <button class="btn btn-danger btn-sm" @click="verify(product.id, 'rejected')"
-                  :disabled="product.status_kurasi === 'rejected'">Tolak</button>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="products.length === 0">
-            <td colspan="6" style="text-align:center; color:var(--text-muted)">Belum ada ajuan produk.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center mb-4">
+          <h3 class="section-title">Statistik Inovasi</h3>
+          <select class="form-control" style="width: 150px;">
+            <option>Tahun 2024</option>
+          </select>
+        </div>
+        <div class="chart-placeholder" style="height: 300px; background: var(--bg-gray); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <div class="bars" style="display: flex; gap: 20px; align-items: flex-end; height: 80%;">
+            <div class="bar" style="width: 30px; height: 40%; background: var(--primary);"></div>
+            <div class="bar" style="width: 30px; height: 70%; background: var(--primary);"></div>
+            <div class="bar" style="width: 30px; height: 50%; background: var(--primary);"></div>
+            <div class="bar" style="width: 30px; height: 90%; background: var(--primary);"></div>
+            <div class="bar" style="width: 30px; height: 60%; background: var(--primary);"></div>
+            <div class="bar" style="width: 30px; height: 30%; background: var(--primary);"></div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
+import Sidebar from '../../components/Sidebar.vue'
 import { ref, onMounted } from 'vue'
 import api from '../../services/api'
 
 const products = ref([])
-const actionMsg = ref('')
-const actionError = ref(false)
 
 async function loadProducts() {
   try {
@@ -81,18 +69,49 @@ async function loadProducts() {
   }
 }
 
-async function verify(id, status) {
-  actionMsg.value = ''
-  try {
-    await api.put(`/admin/products/${id}/verify`, { status_kurasi: status })
-    actionMsg.value = `Produk berhasil di-${status === 'approved' ? 'setujui' : 'tolak'}.`
-    actionError.value = false
-    await loadProducts()
-  } catch (e) {
-    actionMsg.value = e.response?.data?.message || 'Gagal mengubah status.'
-    actionError.value = true
-  }
-}
-
 onMounted(loadProducts)
 </script>
+
+<style scoped>
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  background: var(--primary-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: var(--primary);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+</style>
