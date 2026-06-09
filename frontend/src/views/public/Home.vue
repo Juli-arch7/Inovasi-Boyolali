@@ -48,8 +48,8 @@
             <select v-model="filters.category" class="form-control">
               <option value="">Semua</option>
               <option value="Pelayanan Publik">Pelayanan Publik</option>
-              <option value="Tata Kelola Pemerintahan">Tata Kelola Pemerintahan</option>
-              <option value="Inovasi Daerah Lainnya">Inovasi Daerah Lainnya</option>
+              <option value="Tata Kelola Pemerintahan">Tata Kelola</option>
+              <option value="Inovasi Daerah Lainnya">Lainnya</option>
             </select>
           </div>
           
