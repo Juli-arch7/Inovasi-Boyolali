@@ -47,7 +47,13 @@
             <div class="info-list">
               <div class="info-item">
                 <label>Status</label>
-                <span class="badge-success">TERVERIFIKASI</span>
+                <span :class="{
+  'badge-success': product.status_kurasi === 'approved',
+  'badge-warning': product.status_kurasi === 'pending',
+  'badge-danger': product.status_kurasi === 'rejected'
+}">
+  {{ product.status_kurasi.toUpperCase() }}
+</span>
               </div>
               <div class="info-item">
                 <label>Tahapan</label>
@@ -124,7 +130,8 @@ const marketplaceLink = computed(() => {
 
 onMounted(async () => {
   try {
-    const res = await api.get(`/public/products/${route.params.id}`)
+    // 🎯 GANTI URL MENJADI JALUR INISIATOR
+    const res = await api.get(`/inisiator/products/${route.params.id}`)
     product.value = res.data
   } catch (e) {
     console.error('Failed to load product', e)

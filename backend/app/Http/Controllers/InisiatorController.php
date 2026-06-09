@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProdukInovasi;
+use App\Models\Masyarakat;
+use App\Models\Pemerintah;
 use App\Models\OPD;
 use App\Models\BentukInovasi;
 use App\Models\TahapanInovasi;
 use App\Models\JenisInisiator;
+use App\Models\Kecamatan;
+use App\Models\Kelurahan;
 use Illuminate\Http\Request;
 
 class InisiatorController extends Controller
@@ -20,8 +24,13 @@ class InisiatorController extends Controller
             'bentuk_inovasis' => BentukInovasi::all(),
             'tahapan_inovasis' => TahapanInovasi::all(),
             'jenis_inisiators' => JenisInisiator::all(),
-            'kecamatans' => \App\Models\Kecamatan::all(),
-            'kelurahans' => \App\Models\Kelurahan::all(),
+            'kecamatans' => Kecamatan::all(),
+            'kelurahans' => Kelurahan::all(),
+
+            // Ini sudah benar, pertahankan!
+            'masyarakats' => Masyarakat::all(),
+            'pemerintahs' => Pemerintah::all(),
+            
             'inisiator_profile' => $user->inisiatorProfile ? $user->inisiatorProfile->load('kelurahan') : null
         ]);
     }
@@ -46,7 +55,13 @@ class InisiatorController extends Controller
 
         $product = ProdukInovasi::where('id', $id)
             ->where('id_inisiator', $user->inisiatorProfile->id)
-            ->with(['mediaInovasi'])
+            ->with([
+                'mediaInovasi', 
+                'opd', 
+                'bentukInovasi', 
+                'tahapanInovasi',
+                'inisiatorProfile' // Tarik juga profilnya jika Vue butuh nama/jenis inisiator
+            ])
             ->first();
 
         if (!$product) {
@@ -70,45 +85,61 @@ class InisiatorController extends Controller
             'id_bentuk' => 'required|exists:bentuk_inovasis,id',
             'nama_inisiator' => 'required|string|max:255',
             'id_jenis_inisiator' => 'required|exists:jenis_inisiators,id',
+            'id_opd' => 'nullable|exists:opds,id',
+            'id_pemerintah' => 'nullable|exists:pemerintahs,id',
+            'id_masyarakat' => 'nullable|exists:masyarakats,id_masyarakat', 
             'kontak' => 'required|string|max:255',
+            'id_kecamatan' => 'required|exists:kecamatans,id',
             'id_kelurahan' => 'required|exists:kelurahans,id',
             'link_marketplace' => 'nullable|string|max:500',
-            'file_dokumentasi' => 'nullable|file|max:10240'
+            'is_digital' => 'required|boolean',
+            'file_dokumentasi' => 'nullable|array|max:10', // Validasi untuk multiple files
+            'file_dokumentasi.*' => 'file|max:10240' // Validasi untuk multiple files
         ]);
 
-        // Update inisiator profile
+        // Update atau lengkapi profil inisiator yang sedang login
         $user->inisiatorProfile->update([
             'nama_inisiator' => $request->input('nama_inisiator'),
             'id_jenis_inisiator' => $request->input('id_jenis_inisiator'),
             'kontak' => $request->input('kontak'),
-            'id_kelurahan' => $request->input('id_kelurahan')
+            'id_kelurahan' => $request->input('id_kelurahan'),
+            'id_kecamatan' => $request->input('id_kecamatan')
         ]);
 
-        // Create product
+        // 🛠️ PERBAIKAN: Simpan data id_opd / id_masyarakat / id_pemerintah secara dinamis ke produk
         $product = ProdukInovasi::create([
             'id_inisiator' => $user->inisiatorProfile->id,
-            'id_opd' => OPD::first()?->id ?? 1,
             'id_bentuk' => $request->input('id_bentuk'),
             'id_tahapan' => TahapanInovasi::first()?->id ?? 1,
             'nama_inovasi' => $request->input('nama_inovasi'),
             'deskripsi' => $request->input('deskripsi'),
             'tahun_inovasi' => $request->input('tahun_inovasi'),
             'status_kurasi' => 'pending',
-            'is_digital' => false
+            'is_digital' => $request->input('is_digital'),
+            
+            // Mengambil input kondisional dari Form Vue
+            'id_opd' => $request->input('id_opd'),
+            'id_masyarakat' => $request->input('id_masyarakat'),
+            'id_pemerintah' => $request->input('id_pemerintah'),
+            'id_kecamatan' => $request->input('id_kecamatan'),
+            'id_kelurahan' => $request->input('id_kelurahan'),
+            'kontak' => $request->input('kontak'),
         ]);
 
         // Save file dokumentasi
         if ($request->hasFile('file_dokumentasi')) {
-            $file = $request->file('file_dokumentasi');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $fileName);
-            $product->mediaInovasi()->create([
-                'jenis_media' => 'file',
-                'isi_konten' => '/uploads/' . $fileName,
-                'is_primary' => true,
-                'urutan' => 0
-            ]);
+        foreach ($request->file('file_dokumentasi') as $index => $file) {
+        $fileName = time() . '_' . $index . '_' . $file->getClientOriginalName();
+        $file->move(public_path('uploads'), $fileName);
+        
+        $product->mediaInovasi()->create([
+            'jenis_media' => 'file',
+            'isi_konten' => '/uploads/' . $fileName,
+            'is_primary' => $index === 0, // File pertama jadi primary image/cover
+            'urutan' => $index
+        ]);
         }
+    }
 
         // Save marketplace link
         if ($request->filled('link_marketplace')) {
@@ -145,10 +176,16 @@ class InisiatorController extends Controller
             'id_bentuk' => 'required|exists:bentuk_inovasis,id',
             'nama_inisiator' => 'required|string|max:255',
             'id_jenis_inisiator' => 'required|exists:jenis_inisiators,id',
+            'id_opd' => 'nullable|exists:opds,id',
+            'id_pemerintah' => 'nullable|exists:pemerintahs,id',
+            'id_masyarakat' => 'nullable|exists:masyarakats,id_masyarakat', 
             'kontak' => 'required|string|max:255',
+            'id_kecamatan' => 'required|exists:kecamatans,id',
             'id_kelurahan' => 'required|exists:kelurahans,id',
             'link_marketplace' => 'nullable|string|max:500',
-            'file_dokumentasi' => 'nullable|file|max:10240'
+            'is_digital' => 'required|boolean',
+            'file_dokumentasi' => 'nullable|array|max:10',
+            'file_dokumentasi.*' => 'file|max:10240'
         ]);
 
         // Update inisiator profile
@@ -156,37 +193,56 @@ class InisiatorController extends Controller
             'nama_inisiator' => $request->input('nama_inisiator'),
             'id_jenis_inisiator' => $request->input('id_jenis_inisiator'),
             'kontak' => $request->input('kontak'),
+            'id_kecamatan' => $request->input('id_kecamatan'),
             'id_kelurahan' => $request->input('id_kelurahan')
         ]);
 
-        // Update product
+        // 🛠️ PERBAIKAN: Update juga kolom kondisionalnya
         $product->update([
             'nama_inovasi' => $request->input('nama_inovasi'),
             'deskripsi' => $request->input('deskripsi'),
             'tahun_inovasi' => $request->input('tahun_inovasi'),
             'id_bentuk' => $request->input('id_bentuk'),
+            'is_digital' => $request->input('is_digital'),
+            
+            'id_opd' => $request->input('id_opd'),
+            'id_masyarakat' => $request->input('id_masyarakat'),
+            'id_pemerintah' => $request->input('id_pemerintah'),
+            'id_kecamatan' => $request->input('id_kecamatan'),
+            'id_kelurahan' => $request->input('id_kelurahan'),
+            'kontak' => $request->input('kontak'),
         ]);
 
-        // Save file dokumentasi
-        if ($request->hasFile('file_dokumentasi')) {
-            $oldMedia = $product->mediaInovasi()->where('jenis_media', 'file')->first();
-            if ($oldMedia) {
+        // Hapus file lama yang sudah tidak ada di list existing_files Vue
+        $existingInVue = json_decode($request->input('existing_files', '[]'), true);
+        $oldMedias = $product->mediaInovasi()->where('jenis_media', 'file')->get();
+
+        foreach ($oldMedias as $oldMedia) {
+            if (!in_array($oldMedia->isi_konten, $existingInVue)) {
                 $oldPath = public_path(ltrim($oldMedia->isi_konten, '/'));
                 if (file_exists($oldPath)) {
                     @unlink($oldPath);
                 }
                 $oldMedia->delete();
             }
+        }
 
-            $file = $request->file('file_dokumentasi');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $fileName);
-            $product->mediaInovasi()->create([
-                'jenis_media' => 'file',
-                'isi_konten' => '/uploads/' . $fileName,
-                'is_primary' => true,
-                'urutan' => 0
-            ]);
+        // Simpan file baru tambahan (jika ada)
+        if ($request->hasFile('file_dokumentasi')) {
+            // Ambil nomor urutan terakhir yang tersisa agar tidak bentrok
+            $lastUrutan = $product->mediaInovasi()->where('jenis_media', 'file')->max('urutan') ?? -1;
+            
+            foreach ($request->file('file_dokumentasi') as $index => $file) {
+                $fileName = time() . '_' . $index . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads'), $fileName);
+                
+                $product->mediaInovasi()->create([
+                    'jenis_media' => 'file',
+                    'isi_konten' => '/uploads/' . $fileName,
+                    'is_primary' => ($lastUrutan === -1 && $index === 0), 
+                    'urutan' => $lastUrutan + 1 + $index
+                ]);
+            }
         }
 
         // Save marketplace link

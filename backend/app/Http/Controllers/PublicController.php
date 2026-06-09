@@ -17,6 +17,7 @@ class PublicController extends Controller
             ->where('is_active', true)
             ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi'])
             ->get();
+            
         return response()->json($products);
     }
 

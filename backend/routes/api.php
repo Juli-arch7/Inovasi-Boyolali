@@ -37,10 +37,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users', [AdminController::class, 'getUsers']);
     Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
 
-    // Inisiator Routes
+    // ======= Inisiator Routes =======
     Route::get('/inisiator/metadata', [InisiatorController::class, 'getMetadata']);
     Route::get('/inisiator/products', [InisiatorController::class, 'getMyProducts']);
     Route::post('/inisiator/products', [InisiatorController::class, 'submitProduct']);
+    
+    // 🎯 AMANKAN: Naikkan rute statis ini ke atas rute {id}
+    Route::get('/inisiator/form-selection', [InisiatorController::class, 'getFormSelection']);
+
+    // 🎯 TARUH DI PALING BAWAH: Semua rute yang menangkap parameter {id} dinamis
     Route::get('/inisiator/products/{id}', [InisiatorController::class, 'getProductDetail']);
     Route::put('/inisiator/products/{id}', [InisiatorController::class, 'updateProduct']);
 });
