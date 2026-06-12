@@ -93,12 +93,15 @@
             </div>
             <div class="form-group">
               <label>Tahapan Inovasi</label>
-              <select class="form-control" v-model="form.id_tahapan" required>
+              <select class="form-control" v-model="form.id_tahapan" required disabled>
                 <option value="">Pilih Tahapan</option>
                 <option v-for="tahap in tahapanOptions" :key="tahap.id" :value="tahap.id">
                   {{ tahap.nama_tahapan }}
                 </option>
               </select>
+              <small class="text-muted" style="display: block; margin-top: 0.25rem; font-size: 0.75rem;">
+                Tahapan inovasi ditentukan dan diperbarui oleh admin/verifikator.
+              </small>
             </div>
             <div class="form-group">
               <label>Bentuk Inovasi</label>
@@ -418,9 +421,14 @@ onMounted(async () => {
     
     profile = resMeta.data.inisiator_profile
     
-    if (profile && !isEdit.value) {
-      form.value.nama_inisiator = profile.nama_inisiator || ''
-      form.value.kontak = profile.kontak || ''
+    if (!isEdit.value) {
+      if (profile) {
+        form.value.nama_inisiator = profile.nama_inisiator || ''
+        form.value.kontak = profile.kontak || ''
+      }
+      if (tahapanOptions.value.length > 0) {
+        form.value.id_tahapan = tahapanOptions.value[0].id
+      }
     }
   } catch (e) {
     console.error('Gagal mengambil metadata:', e)

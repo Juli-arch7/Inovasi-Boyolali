@@ -36,7 +36,10 @@
             </div>
             <div class="rejection-actions">
               <button class="btn-resubmit" @click="editProduct(product.id)">
-                <i class='bx bx-refresh'></i> Ajukan Ulang
+                <i class='bx bx-edit'></i> Revisi & Ajukan Ulang
+              </button>
+              <button class="btn-resubmit-direct" @click="resubmitProduct(product.id)">
+                <i class='bx bx-refresh'></i> Ajukan Ulang Langsung
               </button>
             </div>
           </div>
@@ -63,7 +66,18 @@
         <div v-for="product in filteredProducts" :key="product.id" class="innovation-item card">
           <div class="item-header">
             <h3 class="item-title">{{ product.nama_inovasi }}</h3>
-            <span :class="['badge', `badge-${product.status_kurasi}`]">{{ product.status_kurasi }}</span>
+            <div class="item-badges">
+              <!-- Ikon penolakan -->
+              <button
+                v-if="product.status_kurasi === 'rejected'"
+                class="rejection-icon-btn"
+                @click.stop="showRejectionDetail(product)"
+                title="Lihat alasan penolakan"
+              >
+                <i class='bx bx-error-circle'></i>
+              </button>
+              <span :class="['badge', `badge-${product.status_kurasi}`]">{{ product.status_kurasi }}</span>
+            </div>
           </div>
           <p class="item-description">{{ product.deskripsi || 'Tidak ada deskripsi.' }}</p>
           <div class="item-footer">
@@ -79,6 +93,40 @@
         </div>
       </div>
     </main>
+
+    <!-- Modal Alasan Penolakan -->
+    <Teleport to="body">
+      <div v-if="showRejectionModal" class="modal-overlay" @click.self="showRejectionModal = false">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>Alasan Penolakan</h3>
+            <button class="modal-close" @click="showRejectionModal = false">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="modal-product-name">
+              <i class='bx bx-package'></i>
+              <strong>{{ selectedRejectedProduct?.nama_inovasi }}</strong>
+            </div>
+            <div class="modal-rejection-reason">
+              <span class="reason-label">Alasan Penolakan:</span>
+              <p class="reason-text">{{ selectedRejectedProduct?.alasan_penolakan || 'Tidak ada alasan.' }}</p>
+            </div>
+            <div v-if="selectedRejectedProduct?.tanggal_review" class="modal-review-date">
+              <i class='bx bx-calendar'></i> Ditolak pada: {{ formatDate(selectedRejectedProduct.tanggal_review) }}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" @click="showRejectionModal = false">Tutup</button>
+            <button class="btn-resubmit" @click="editProduct(selectedRejectedProduct?.id); showRejectionModal = false">
+              <i class='bx bx-edit'></i> Revisi
+            </button>
+            <button class="btn-resubmit-direct" @click="resubmitProduct(selectedRejectedProduct?.id); showRejectionModal = false">
+              <i class='bx bx-refresh'></i> Ajukan Ulang
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -92,9 +140,13 @@ const router = useRouter()
 const myProducts = ref([])
 const loading = ref(true)
 const activeTab = ref('Semua')
-const tabs = ['Semua', 'Draft', 'Verifikasi', 'Selesai']
+const tabs = ['Semua', 'Draft', 'Verifikasi', 'Ditolak', 'Selesai']
 const searchQuery = ref('')
 const dismissedIds = ref(new Set())
+
+// Rejection modal
+const showRejectionModal = ref(false)
+const selectedRejectedProduct = ref(null)
 
 const rejectedProducts = computed(() => {
   return myProducts.value.filter(
@@ -104,6 +156,11 @@ const rejectedProducts = computed(() => {
 
 function dismissNotification(id) {
   dismissedIds.value = new Set([...dismissedIds.value, id])
+}
+
+function showRejectionDetail(product) {
+  selectedRejectedProduct.value = product
+  showRejectionModal.value = true
 }
 
 function formatDate(dateStr) {
@@ -123,6 +180,8 @@ const filteredProducts = computed(() => {
       statusMatch = p.status_kurasi === 'draft'
     } else if (activeTab.value === 'Verifikasi') {
       statusMatch = p.status_kurasi === 'pending'
+    } else if (activeTab.value === 'Ditolak') {
+      statusMatch = p.status_kurasi === 'rejected'
     } else if (activeTab.value === 'Selesai') {
       statusMatch = p.status_kurasi === 'approved'
     }
@@ -147,6 +206,17 @@ function goToDetail(id) {
 
 function editProduct(id) {
   router.push(`/inisiator/pengajuan?id=${id}`)
+}
+
+async function resubmitProduct(id) {
+  if (!confirm('Apakah Anda yakin ingin mengajukan ulang inovasi ini tanpa perubahan?')) return
+  try {
+    await api.put(`/inisiator/products/${id}/resubmit`)
+    alert('Produk berhasil diajukan ulang untuk verifikasi.')
+    await loadMyProducts()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Gagal mengajukan ulang.')
+  }
 }
 
 onMounted(loadMyProducts)
@@ -272,6 +342,25 @@ onMounted(loadMyProducts)
   background: #b91c1c;
 }
 
+.btn-resubmit-direct {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-resubmit-direct:hover {
+  background: #eff6ff;
+}
+
 .rejection-dismiss {
   position: absolute;
   top: 0.75rem;
@@ -286,6 +375,39 @@ onMounted(loadMyProducts)
 
 .rejection-dismiss:hover {
   color: #374151;
+}
+
+/* Rejection Icon Button on Product Cards */
+.item-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rejection-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #dc2626;
+  font-size: 1.125rem;
+  transition: all 0.2s;
+  animation: pulseRed 2s infinite;
+}
+
+.rejection-icon-btn:hover {
+  background: #fee2e2;
+  transform: scale(1.1);
+}
+
+@keyframes pulseRed {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
 }
 
 /* Tabs */
@@ -386,5 +508,98 @@ onMounted(loadMyProducts)
 .item-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-product-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #1e293b;
+}
+
+.modal-product-name i {
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.modal-rejection-reason {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-review-date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  justify-content: flex-end;
 }
 </style>
