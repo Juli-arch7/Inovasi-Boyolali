@@ -61,11 +61,12 @@
                 <th>Username / Email</th>
                 <th>Role</th>
                 <th>Level</th>
+                <th>Status</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="admin in admins" :key="admin.id">
+              <tr v-for="admin in admins" :key="admin.id" :class="{ 'row-inactive': admin.is_active === false }">
                 <td style="font-weight: 600;">{{ admin.name }}</td>
                 <td>
                   <div class="text-main">{{ admin.username }}</div>
@@ -78,18 +79,65 @@
                   </span>
                 </td>
                 <td>
-                  <button 
-                    v-if="admin.id !== currentUserId" 
-                    class="btn btn-outline btn-sm delete-btn" 
-                    @click="deleteAdmin(admin.id)"
-                  >
-                    Hapus
-                  </button>
+                  <span :class="['status-pill', admin.is_active !== false ? 'status-active' : 'status-inactive']">
+                    {{ admin.is_active !== false ? 'Aktif' : 'Nonaktif' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons" v-if="admin.id !== currentUserId">
+                    <button 
+                      :class="['btn', 'btn-sm', admin.is_active !== false ? 'btn-deactivate' : 'btn-activate']"
+                      @click="toggleAdminActive(admin)"
+                      :disabled="togglingAdmin === admin.id"
+                    >
+                      {{ admin.is_active !== false ? 'Nonaktifkan' : 'Aktifkan' }}
+                    </button>
+                  </div>
                   <span v-else class="text-muted" style="font-size: 0.85rem; font-style: italic;">Anda</span>
                 </td>
               </tr>
               <tr v-if="admins.length === 0">
-                <td colspan="5" class="text-center py-4">Belum ada admin yang terdaftar.</td>
+                <td colspan="6" class="text-center py-4">Belum ada admin yang terdaftar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Action Logs Card -->
+      <div class="card mt-4">
+        <h3 class="section-title mb-4" style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class='bx bx-history'></i> Log Aksi Administrator (Sistem)
+        </h3>
+        <div v-if="loadingLogs" class="text-center py-4 text-muted">Memuat log...</div>
+        <div v-else-if="logs.length === 0" class="text-center py-4 text-muted">Belum ada log aktivitas admin.</div>
+        <div v-else class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Administrator</th>
+                <th>Aksi</th>
+                <th>Detail Aktivitas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in logs" :key="log.id">
+                <td class="log-time" style="font-size: 0.85rem; color: var(--text-light); white-space: nowrap;">
+                  {{ formatDateTime(log.created_at) }}
+                </td>
+                <td>
+                  <span style="font-weight: 600;">{{ log.admin?.name || 'Unknown' }}</span>
+                  <span :class="['badge', `badge-${log.admin?.role}`]" style="margin-left: 0.5rem; font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                    {{ log.admin?.role }}
+                  </span>
+                </td>
+                <td>
+                  <span :class="['log-action-pill', `action-${log.action}`]">
+                    {{ getActionLabel(log.action) }}
+                  </span>
+                </td>
+                <td class="log-desc" style="font-size: 0.875rem; line-height: 1.4;">{{ log.description }}</td>
               </tr>
             </tbody>
           </table>
@@ -109,6 +157,41 @@ const showAddForm = ref(false)
 const submitting = ref(false)
 const formMsg = ref('')
 const formError = ref(false)
+const togglingAdmin = ref(null)
+
+// Admin Logs
+const logs = ref([])
+const loadingLogs = ref(false)
+
+async function loadLogs() {
+  loadingLogs.value = true
+  try {
+    const res = await api.get('/admin/logs?target_type=user')
+    logs.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+function getActionLabel(action) {
+  switch(action) {
+    case 'toggle_user_active': return 'Toggle Aktif Akun';
+    case 'create_admin': return 'Tambah Admin';
+    case 'verify_product': return 'Verifikasi Inovasi';
+    case 'update_tahapan': return 'Update Tahapan';
+    default: return action;
+  }
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
 
 const form = ref({
   name: '', username: '', email: '', password: '', level: 'admin'
@@ -138,6 +221,7 @@ async function createAdmin() {
     formError.value = false
     form.value = { name: '', username: '', email: '', password: '', level: 'admin' }
     await loadAdmins()
+    await loadLogs()
     showAddForm.value = false
   } catch (e) {
     formMsg.value = e.response?.data?.message || 'Gagal menambahkan admin.'
@@ -147,18 +231,27 @@ async function createAdmin() {
   }
 }
 
-async function deleteAdmin(id) {
-  if (!confirm('Apakah Anda yakin ingin menghapus administrator ini?')) return
+async function toggleAdminActive(admin) {
+  const action = admin.is_active !== false ? 'menonaktifkan' : 'mengaktifkan'
+  if (!confirm(`Apakah Anda yakin ingin ${action} administrator "${admin.name}"?`)) return
+  
+  togglingAdmin.value = admin.id
   try {
-    const res = await api.delete(`/superadmin/admins/${id}`)
-    alert(res.data.message || 'Admin berhasil dihapus.')
+    const res = await api.put(`/admin/users/${admin.id}/toggle-active`)
+    alert(res.data.message || `Admin berhasil di${action}.`)
     await loadAdmins()
+    await loadLogs()
   } catch (e) {
-    alert(e.response?.data?.message || 'Gagal menghapus admin.')
+    alert(e.response?.data?.message || `Gagal ${action} admin.`)
+  } finally {
+    togglingAdmin.value = null
   }
 }
 
-onMounted(loadAdmins)
+onMounted(async () => {
+  await loadAdmins()
+  await loadLogs()
+})
 </script>
 
 <style scoped>
@@ -182,12 +275,83 @@ onMounted(loadAdmins)
   font-size: 0.75rem;
   font-weight: 600;
 }
-.delete-btn {
-  color: var(--danger);
-  border-color: var(--danger);
+.row-inactive {
+  opacity: 0.6;
+  background: #fafafa;
 }
-.delete-btn:hover {
-  background: var(--danger);
-  color: #fff;
+.status-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+.status-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.status-inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.btn-deactivate {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-deactivate:hover:not(:disabled) {
+  background: #fef2f2;
+}
+.btn-activate {
+  background: transparent;
+  color: #16a34a;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-activate:hover:not(:disabled) {
+  background: #f0fdf4;
+}
+.btn-deactivate:disabled,
+.btn-activate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.log-action-pill {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+.action-toggle_user_active {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+.action-create_admin {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.badge-superadmin {
+  background: #fef3c7;
+  color: #d97706;
+}
+.badge-admin {
+  background: #e0f2fe;
+  color: #0284c7;
 }
 </style>

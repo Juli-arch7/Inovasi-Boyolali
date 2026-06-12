@@ -40,6 +40,31 @@
                 </p>
               </div>
             </div>
+
+            <!-- Admin Logs for this product -->
+            <div class="card mt-4">
+              <h3 class="sidebar-title mb-4" style="display: flex; align-items: center; gap: 0.5rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.75rem;">
+                <i class='bx bx-history'></i> Riwayat Aksi Administrator
+              </h3>
+              <div v-if="loadingLogs" class="text-center py-3 text-muted" style="font-size: 0.9rem;">Memuat riwayat...</div>
+              <div v-else-if="logs.length === 0" class="text-center py-3 text-muted" style="font-size: 0.9rem;">Belum ada riwayat aksi admin untuk produk ini.</div>
+              <div v-else class="logs-timeline" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div v-for="log in logs" :key="log.id" class="log-timeline-item" style="border-left: 3px solid var(--primary); padding-left: 1rem; margin-left: 0.5rem;">
+                  <div class="log-timeline-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <span style="font-weight: 700; font-size: 0.9rem; color: #1e293b;">
+                      {{ log.admin?.name || 'Unknown' }}
+                      <span :class="['badge', `badge-${log.admin?.role}`]" style="margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.3rem;">
+                        {{ log.admin?.role }}
+                      </span>
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-light);">{{ formatDateTime(log.created_at) }}</span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                    {{ log.description }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <aside class="detail-sidebar">
@@ -70,22 +95,56 @@
                   <label>Tanggal Review</label>
                   <span>{{ product.tanggal_review ? formatDate(product.tanggal_review) : '-' }}</span>
                 </div>
+                <div class="info-item" v-if="product.admin_profile">
+                  <label>Diverifikasi Oleh</label>
+                  <span>{{ product.admin_profile?.nama_admin || '-' }}</span>
+                </div>
               </div>
 
-              <div class="action-buttons mt-4">
+              <!-- Fitur 3: Tombol hanya muncul jika status masih pending -->
+              <div v-if="product.status_kurasi === 'pending'" class="action-buttons mt-4">
                 <button
                   class="btn btn-primary w-full mb-2"
                   @click="handleVerify('approved')"
-                  :disabled="submitting || product.status_kurasi === 'approved'"
+                  :disabled="submitting"
                 >
                   <i class='bx bx-check'></i> SETUJUI
                 </button>
                 <button
                   class="btn-reject w-full"
                   @click="openRejectModal"
-                  :disabled="submitting || product.status_kurasi === 'rejected'"
+                  :disabled="submitting"
                 >
                   <i class='bx bx-x'></i> TOLAK
+                </button>
+              </div>
+
+              <!-- Status badge jika sudah diputuskan -->
+              <div v-else class="decision-status mt-4">
+                <div v-if="product.status_kurasi === 'approved'" class="decision-badge decision-approved">
+                  <i class='bx bx-check-circle'></i>
+                  <span>Inovasi Sudah Disetujui</span>
+                </div>
+                <div v-else-if="product.status_kurasi === 'rejected'" class="decision-badge decision-rejected">
+                  <i class='bx bx-x-circle'></i>
+                  <span>Inovasi Sudah Ditolak</span>
+                </div>
+              </div>
+
+              <!-- Fitur 1: Update Tahapan — hanya admin yang memverifikasi & produk approved -->
+              <div v-if="canUpdateTahapan" class="tahapan-update-section mt-4">
+                <h3 class="sidebar-title">Update Tahapan</h3>
+                <div class="form-group">
+                  <select class="form-control" v-model="selectedTahapan">
+                    <option v-for="t in tahapanOptions" :key="t.id" :value="t.id">{{ t.nama_tahapan }}</option>
+                  </select>
+                </div>
+                <button
+                  class="btn btn-primary w-full mt-2"
+                  @click="handleUpdateTahapan"
+                  :disabled="updatingTahapan || selectedTahapan === product.id_tahapan"
+                >
+                  <i class='bx bx-refresh'></i> {{ updatingTahapan ? 'Menyimpan...' : 'Simpan Tahapan' }}
                 </button>
               </div>
             </div>
@@ -155,6 +214,36 @@ const showRejectModal = ref(false)
 const rejectionReason = ref('')
 const rejectionError = ref('')
 
+// Fitur 1: Tahapan update
+const tahapanOptions = ref([])
+const selectedTahapan = ref(null)
+const updatingTahapan = ref(false)
+const currentAdminProfileId = ref(null)
+
+// Admin logs
+const logs = ref([])
+const loadingLogs = ref(false)
+
+async function loadLogs() {
+  loadingLogs.value = true
+  try {
+    const res = await api.get(`/admin/logs?target_type=product&target_id=${route.params.id}`)
+    logs.value = res.data
+  } catch (e) {
+    console.error('Failed to load logs', e)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
 const presetReasons = [
   'Deskripsi produk kurang lengkap',
   'Gambar produk tidak sesuai',
@@ -166,7 +255,14 @@ const presetReasons = [
 
 const productImages = computed(() => {
   if (!product.value?.media_inovasi) return []
-  return product.value.media_inovasi.filter(m => m.jenis_media === 'foto' || m.jenis_media === 'image' || m.jenis_media === 'foto_produk')
+  return product.value.media_inovasi.filter(m => m.jenis_media === 'foto' || m.jenis_media === 'image' || m.jenis_media === 'foto_produk' || m.jenis_media === 'file')
+})
+
+// Fitur 1: Hanya admin yang memverifikasi & produk approved bisa update tahapan
+const canUpdateTahapan = computed(() => {
+  if (!product.value || product.value.status_kurasi !== 'approved') return false
+  if (!currentAdminProfileId.value || !product.value.id_admin) return false
+  return product.value.id_admin === currentAdminProfileId.value
 })
 
 function getImageUrl(path) {
@@ -188,10 +284,39 @@ async function loadProduct() {
   try {
     const res = await api.get(`/admin/products/${route.params.id}`)
     product.value = res.data
+    selectedTahapan.value = res.data.id_tahapan
   } catch (e) {
     console.error('Failed to load product', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadTahapanOptions() {
+  try {
+    const res = await api.get('/inisiator/metadata')
+    tahapanOptions.value = res.data.tahapan_inovasis || []
+  } catch (e) {
+    console.error('Failed to load tahapan', e)
+  }
+}
+
+async function loadCurrentAdminProfile() {
+  try {
+    const res = await api.get('/user')
+    // Get admin profile ID from admin_profile relation
+    if (res.data.admin_profile) {
+      currentAdminProfileId.value = res.data.admin_profile.id
+    } else {
+      // Try loading separately
+      const userStr = localStorage.getItem('user')
+      const user = userStr ? JSON.parse(userStr) : null
+      if (user?.admin_profile?.id) {
+        currentAdminProfileId.value = user.admin_profile.id
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load admin profile', e)
   }
 }
 
@@ -202,6 +327,7 @@ async function handleVerify(status) {
     await api.put(`/admin/products/${route.params.id}/verify`, { status_kurasi: status })
     alert('Inovasi berhasil disetujui.')
     await loadProduct()
+    await loadLogs()
   } catch (e) {
     alert(e.response?.data?.message || 'Gagal mengubah status.')
   } finally {
@@ -228,6 +354,7 @@ async function submitRejection() {
     })
     showRejectModal.value = false
     await loadProduct()
+    await loadLogs()
     alert('Inovasi berhasil ditolak.')
   } catch (e) {
     alert(e.response?.data?.message || 'Gagal menolak produk.')
@@ -236,7 +363,32 @@ async function submitRejection() {
   }
 }
 
-onMounted(loadProduct)
+// Fitur 1: Update Tahapan
+async function handleUpdateTahapan() {
+  if (!confirm('Apakah Anda yakin ingin mengubah tahapan inovasi ini?')) return
+  updatingTahapan.value = true
+  try {
+    await api.put(`/admin/products/${route.params.id}/update-tahapan`, {
+      id_tahapan: selectedTahapan.value
+    })
+    alert('Tahapan inovasi berhasil diperbarui.')
+    await loadProduct()
+    await loadLogs()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Gagal mengubah tahapan.')
+  } finally {
+    updatingTahapan.value = false
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([
+    loadProduct(),
+    loadTahapanOptions(),
+    loadCurrentAdminProfile(),
+    loadLogs()
+  ])
+})
 </script>
 
 <style scoped>
@@ -333,6 +485,40 @@ onMounted(loadProduct)
 .no-image-placeholder i {
   font-size: 2rem;
   opacity: 0.4;
+}
+
+/* Decision Status Badges */
+.decision-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--border-radius, 8px);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.decision-approved {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #15803d;
+  border: 1.5px solid #86efac;
+}
+
+.decision-rejected {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: #991b1b;
+  border: 1.5px solid #fca5a5;
+}
+
+.decision-badge i {
+  font-size: 1.25rem;
+}
+
+/* Tahapan Update Section */
+.tahapan-update-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
 /* Action Buttons */

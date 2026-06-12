@@ -60,7 +60,8 @@ class InisiatorController extends Controller
                 'opd', 
                 'bentukInovasi', 
                 'tahapanInovasi',
-                'inisiatorProfile' // Tarik juga profilnya jika Vue butuh nama/jenis inisiator
+                'inisiatorProfile', // Tarik juga profilnya jika Vue butuh nama/jenis inisiator
+                'adminProfile.user' // Tarik profil admin dan model user (email)
             ])
             ->first();
 
@@ -198,7 +199,7 @@ class InisiatorController extends Controller
         ]);
 
         // 🛠️ PERBAIKAN: Update juga kolom kondisionalnya
-        $product->update([
+        $updateData = [
             'nama_inovasi' => $request->input('nama_inovasi'),
             'deskripsi' => $request->input('deskripsi'),
             'tahun_inovasi' => $request->input('tahun_inovasi'),
@@ -211,7 +212,16 @@ class InisiatorController extends Controller
             'id_kecamatan' => $request->input('id_kecamatan'),
             'id_kelurahan' => $request->input('id_kelurahan'),
             'kontak' => $request->input('kontak'),
-        ]);
+        ];
+
+        if ($product->status_kurasi === 'rejected') {
+            $updateData['status_kurasi'] = 'pending';
+            $updateData['alasan_penolakan'] = null;
+            $updateData['tanggal_review'] = null;
+            $updateData['id_admin'] = null;
+        }
+
+        $product->update($updateData);
 
         // Hapus file lama yang sudah tidak ada di list existing_files Vue
         $existingInVue = json_decode($request->input('existing_files', '[]'), true);
@@ -256,5 +266,37 @@ class InisiatorController extends Controller
         }
 
         return response()->json(['message' => 'Product updated successfully', 'product' => $product], 200);
+    }
+
+    /**
+     * Fitur 2: Ajukan ulang produk yang ditolak — reset status ke pending
+     */
+    public function resubmitProduct(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->inisiatorProfile) {
+            return response()->json(['message' => 'Inisiator profile required'], 403);
+        }
+
+        $product = ProdukInovasi::where('id', $id)
+            ->where('id_inisiator', $user->inisiatorProfile->id)
+            ->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found or access denied'], 404);
+        }
+
+        if ($product->status_kurasi !== 'rejected') {
+            return response()->json(['message' => 'Hanya produk yang ditolak yang bisa diajukan ulang.'], 400);
+        }
+
+        $product->update([
+            'status_kurasi' => 'pending',
+            'alasan_penolakan' => null,
+            'tanggal_review' => null,
+            'id_admin' => null,
+        ]);
+
+        return response()->json(['message' => 'Produk berhasil diajukan ulang.', 'product' => $product]);
     }
 }
