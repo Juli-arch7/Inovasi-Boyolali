@@ -94,14 +94,14 @@ a {
   gap: 2rem;
 }
 
-.navbar nav a {
+.navbar nav a:not(.btn) {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-muted);
 }
 
-.navbar nav a:hover,
-.navbar nav a.router-link-exact-active {
+.navbar nav a:not(.btn):hover,
+.navbar nav a:not(.btn).router-link-exact-active {
   color: var(--primary);
 }
 
@@ -215,9 +215,13 @@ a {
 
 .sidebar {
   width: var(--sidebar-width);
+  min-height: calc(100vh - var(--navbar-height));
   background-color: var(--bg-white);
   border-right: 1px solid var(--border-color);
   padding: 1.5rem 1rem;
+  position: sticky;
+  top: var(--navbar-height);
+  align-self: flex-start;
 }
 
 .sidebar-nav {
