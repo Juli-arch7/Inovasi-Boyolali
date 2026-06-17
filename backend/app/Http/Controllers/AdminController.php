@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ProdukInovasi;
 use App\Models\OPD;
 use App\Models\User;
+use App\Models\InisiatorProfile;
+use App\Models\JenisInisiator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -137,5 +140,166 @@ class AdminController extends Controller
         }
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    /**
+     * Dashboard Statistics: total_inovasi, unit_kerja, masyarakat
+     */
+    public function dashboardStatistics(Request $request)
+    {
+        $year = $request->query('year');
+
+        // Base query
+        $baseQuery = ProdukInovasi::query();
+        if ($year) {
+            $baseQuery->where('tahun_inovasi', $year);
+        }
+
+        $total = (clone $baseQuery)->count();
+
+        // Masyarakat: inovasi dari inisiator dengan jenis_inisiator = 'Masyarakat'
+        $masyarakatJenisId = JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->value('id');
+
+        $masyarakat = 0;
+        if ($masyarakatJenisId) {
+            $masyarakatQuery = (clone $baseQuery)
+                ->whereHas('inisiatorProfile', function ($q) use ($masyarakatJenisId) {
+                    $q->where('id_jenis_inisiator', $masyarakatJenisId);
+                });
+            $masyarakat = $masyarakatQuery->count();
+        }
+
+        // Unit Kerja = total - masyarakat (otomatis tangkap jenis baru)
+        $unitKerja = $total - $masyarakat;
+
+        return response()->json([
+            'total_inovasi' => $total,
+            'unit_kerja' => $unitKerja,
+            'masyarakat' => $masyarakat,
+        ]);
+    }
+
+    /**
+     * Dashboard Chart: per-tahun or per-bulan data
+     */
+    public function dashboardChart(Request $request)
+    {
+        $year = $request->query('year');
+
+        if ($year) {
+            // Per-bulan untuk tahun tertentu
+            $labels = [];
+            $data = [];
+            $bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+
+            for ($m = 1; $m <= 12; $m++) {
+                $labels[] = $bulanNames[$m - 1];
+                $data[] = ProdukInovasi::where('tahun_inovasi', $year)
+                    ->whereMonth('created_at', $m)
+                    ->count();
+            }
+
+            return response()->json([
+                'labels' => $labels,
+                'data' => $data,
+                'type' => 'monthly',
+            ]);
+        } else {
+            // Per-tahun: semua tahun yang ada di database
+            $results = ProdukInovasi::selectRaw('tahun_inovasi, COUNT(*) as total')
+                ->groupBy('tahun_inovasi')
+                ->orderBy('tahun_inovasi', 'asc')
+                ->get();
+
+            return response()->json([
+                'labels' => $results->pluck('tahun_inovasi')->map(fn($y) => (string) $y)->toArray(),
+                'data' => $results->pluck('total')->toArray(),
+                'type' => 'yearly',
+            ]);
+        }
+    }
+
+    /**
+     * Dashboard Inovasi List: filtered, searched, paginated, sorted
+     */
+    public function dashboardInovasi(Request $request)
+    {
+        $filter = $request->query('filter', 'all'); // all, unit_kerja, masyarakat
+        $year = $request->query('year');
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 10);
+        $sortBy = $request->query('sort_by', 'created_at');
+        $sortDir = $request->query('sort_dir', 'desc');
+
+        $query = ProdukInovasi::with([
+            'inisiatorProfile.jenisInisiator',
+            'bentukInovasi',
+        ]);
+
+        // Filter tahun
+        if ($year) {
+            $query->where('tahun_inovasi', $year);
+        }
+
+        // Filter jenis inisiator
+        if ($filter !== 'all') {
+            $masyarakatJenisId = JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->value('id');
+
+            if ($filter === 'masyarakat' && $masyarakatJenisId) {
+                $query->whereHas('inisiatorProfile', function ($q) use ($masyarakatJenisId) {
+                    $q->where('id_jenis_inisiator', $masyarakatJenisId);
+                });
+            } elseif ($filter === 'unit_kerja' && $masyarakatJenisId) {
+                $query->whereHas('inisiatorProfile', function ($q) use ($masyarakatJenisId) {
+                    $q->where('id_jenis_inisiator', '!=', $masyarakatJenisId);
+                });
+            }
+        }
+
+        // Search
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_inovasi', 'like', "%{$search}%")
+                  ->orWhereHas('inisiatorProfile', function ($q2) use ($search) {
+                      $q2->where('nama_inisiator', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('bentukInovasi', function ($q2) use ($search) {
+                      $q2->where('nama_bentuk', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Sorting
+        $allowedSorts = ['nama_inovasi', 'tahun_inovasi', 'status_kurasi', 'created_at'];
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $paginated = $query->paginate($perPage);
+
+        // Transform data
+        $items = collect($paginated->items())->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'nama_inovasi' => $p->nama_inovasi,
+                'jenis_inisiator' => $p->inisiatorProfile?->jenisInisiator?->nama_jenis_inisiator ?? '-',
+                'nama_inisiator' => $p->inisiatorProfile?->nama_inisiator ?? '-',
+                'jenis_inovasi' => $p->bentukInovasi?->nama_bentuk ?? '-',
+                'tahun_inovasi' => $p->tahun_inovasi,
+                'status_kurasi' => $p->status_kurasi,
+                'is_active' => $p->is_active,
+                'created_at' => $p->created_at?->format('d M Y'),
+            ];
+        });
+
+        return response()->json([
+            'data' => $items,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]);
     }
 }

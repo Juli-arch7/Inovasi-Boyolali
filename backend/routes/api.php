@@ -29,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/superadmin/admins/{id}', [SuperAdminController::class, 'deleteAdmin']);
 
     // Admin Routes
+    Route::get('/admin/dashboard/statistics', [AdminController::class, 'dashboardStatistics']);
+    Route::get('/admin/dashboard/chart', [AdminController::class, 'dashboardChart']);
+    Route::get('/admin/dashboard/inovasi', [AdminController::class, 'dashboardInovasi']);
     Route::get('/admin/stats', [AdminController::class, 'getStats']);
     Route::get('/admin/products', [AdminController::class, 'getSubmissions']);
     Route::get('/admin/products/{id}', [AdminController::class, 'getProductDetail']);
