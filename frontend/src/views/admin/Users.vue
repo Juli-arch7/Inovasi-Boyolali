@@ -176,6 +176,32 @@
           </div>
         </div>
       </div>
+
+      <!-- User Action Logs -->
+      <div class="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-6">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+          <Clock class="w-5 h-5 text-primary" />
+          Riwayat Aktivitas Pengguna
+        </h3>
+        <div v-if="loadingLogs" class="py-4 text-center text-sm text-slate-500">Memuat riwayat...</div>
+        <div v-else-if="logs.length > 0" class="space-y-4">
+          <div v-for="log in logs" :key="log.id" class="flex gap-4">
+            <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <User class="w-5 h-5 text-primary" />
+            </div>
+            <div class="flex-1 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60">
+              <div class="flex justify-between items-start gap-4">
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}</p>
+                <p class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ formatDate(log.created_at) }}</p>
+              </div>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ log.description }}</p>
+            </div>
+          </div>
+        </div>
+        <div v-else class="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+          <p class="text-sm text-slate-500">Belum ada riwayat aktivitas terkait pengguna.</p>
+        </div>
+      </div>
     </main>
 
     <!-- Delete Confirmation Modal -->
@@ -230,7 +256,7 @@ import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
   Search, Filter, X, Trash2, Users, AlertTriangle,
-  Loader2, Shield, User, Building2
+  Loader2, Shield, User, Building2, Clock
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -243,6 +269,8 @@ const loading = ref(true)
 const showDeleteModal = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
+const logs = ref([])
+const loadingLogs = ref(true)
 
 const isSuperAdmin = computed(() => auth.userRole === 'superadmin')
 const currentUserId = computed(() => {
@@ -304,6 +332,18 @@ async function loadUsers() {
   }
 }
 
+async function loadLogs() {
+  loadingLogs.value = true
+  try {
+    const res = await api.get('/admin/logs', { params: { target_type: 'user' } })
+    logs.value = res.data || []
+  } catch (e) {
+    console.error('Failed to load user logs', e)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
     const query = searchQuery.value.toLowerCase()
@@ -337,7 +377,10 @@ async function confirmDelete() {
   }
 }
 
-onMounted(loadUsers)
+onMounted(() => {
+  loadUsers()
+  loadLogs()
+})
 </script>
 
 <style scoped>

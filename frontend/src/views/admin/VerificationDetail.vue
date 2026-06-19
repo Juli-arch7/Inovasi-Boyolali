@@ -143,32 +143,39 @@
                 Tindakan Verifikasi
               </h3>
 
-              <div class="space-y-3">
+              <div v-if="product.status_kurasi === 'pending'" class="space-y-3">
                 <!-- Approve Button -->
                 <button
                   @click="handleVerify('approved')"
-                  :disabled="submitting || product.status_kurasi === 'approved'"
-                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="product.status_kurasi === 'approved'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'"
+                  :disabled="submitting"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 class="w-4 h-4" />
-                  {{ product.status_kurasi === 'approved' ? 'Sudah Disetujui' : 'Setujui Inovasi' }}
+                  Setujui Inovasi
                 </button>
 
                 <!-- Reject Button -->
                 <button
                   @click="openRejectModal"
-                  :disabled="submitting || product.status_kurasi === 'rejected'"
-                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="product.status_kurasi === 'rejected'
-                    ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/40'
-                    : 'border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20'"
+                  :disabled="submitting"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <XCircle class="w-4 h-4" />
-                  {{ product.status_kurasi === 'rejected' ? 'Sudah Ditolak' : 'Tolak Inovasi' }}
+                  Tolak Inovasi
                 </button>
+              </div>
+              
+              <!-- Info if already verified -->
+              <div v-else class="p-4 rounded-xl border flex items-start gap-3"
+                :class="product.status_kurasi === 'approved' 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400' 
+                  : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-400'">
+                <FileCheck v-if="product.status_kurasi === 'approved'" class="w-5 h-5 flex-shrink-0" />
+                <XCircle v-else class="w-5 h-5 flex-shrink-0" />
+                <div>
+                  <p class="text-sm font-bold">{{ product.status_kurasi === 'approved' ? 'Inovasi Disetujui' : 'Inovasi Ditolak' }}</p>
+                  <p class="text-xs mt-0.5 opacity-80">Tindakan verifikasi sudah selesai dilakukan.</p>
+                </div>
               </div>
             </div>
 
@@ -228,6 +235,30 @@
                     Lihat Link
                   </a>
                 </div>
+              </div>
+            </div>
+
+            <!-- Action Logs Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
+              <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                Riwayat Aktivitas
+              </h3>
+              
+              <div v-if="logs.length > 0" class="space-y-4">
+                <div v-for="log in logs" :key="log.id" class="flex gap-3">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle2 v-if="log.action === 'verify_product'" class="w-4 h-4 text-emerald-500" />
+                    <User v-else class="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{{ log.description }}</p>
+                    <p class="text-[10px] text-slate-400 mt-1">{{ formatDate(log.created_at) }}</p>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-4">
+                <p class="text-xs text-slate-400">Belum ada riwayat aktivitas.</p>
               </div>
             </div>
 
@@ -342,6 +373,7 @@ const submitting = ref(false)
 const showRejectModal = ref(false)
 const rejectionReason = ref('')
 const rejectionError = ref('')
+const logs = ref([])
 
 const presetReasons = [
   'Deskripsi kurang lengkap',
@@ -420,6 +452,10 @@ async function loadProduct() {
   try {
     const res = await api.get(`/admin/products/${route.params.id}`)
     product.value = res.data
+    
+    // Load logs
+    const logRes = await api.get('/admin/logs', { params: { target_type: 'product', target_id: route.params.id } })
+    logs.value = logRes.data || []
   } catch (e) {
     console.error('Failed to load product', e)
     toastStore.show('Gagal memuat detail inovasi.', 'error')

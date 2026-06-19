@@ -123,10 +123,10 @@
 
               <!-- Kontak Inisiator -->
               <div v-if="product.inisiator_profile?.kontak" class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
-                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Kontak</span>
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Kontak Inisiator</span>
                 <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  <Phone class="w-4 h-4 text-slate-400" />
-                  <a :href="'tel:' + product.inisiator_profile.kontak" class="hover:text-primary transition-colors">
+                  <Phone class="w-4 h-4 text-emerald-500" />
+                  <a :href="'https://wa.me/' + product.inisiator_profile.kontak" target="_blank" rel="noopener" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:underline transition-colors font-bold">
                     {{ product.inisiator_profile.kontak }}
                   </a>
                 </div>
@@ -231,10 +231,10 @@
                   target="_blank" 
                   rel="noopener" 
                   @click="handleDownload"
-                  class="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-semibold text-white bg-gradient-to-r from-primary to-accent hover:from-primary-hover hover:to-accent-hover shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                  class="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                 >
                   <ExternalLink class="w-4 h-4" />
-                  Lihat di Marketplace / Buka Link
+                  Kunjungi Marketplace
                 </a>
               </div>
               <div v-else>
