@@ -51,7 +51,7 @@
 
             <div class="form-field">
               <label class="field-label">Jenis Inisiator <span class="text-rose-500">*</span></label>
-              <select v-model="form.id_jenis_inisiator" required class="field-input">
+              <select v-model="form.id_jenis_inisiator" @change="onJenisChange" required class="field-input">
                 <option value="">Pilih Jenis</option>
                 <option v-for="jenis in jenisInisiatorOptions" :key="jenis.id" :value="jenis.id">
                   {{ jenis.nama_jenis_inisiator }}
@@ -64,11 +64,12 @@
               <input type="text" v-model="form.kontak" placeholder="Email atau Nomor HP" required class="field-input" />
             </div>
 
-            <div class="form-field">
+            <!-- OPD: hanya tampil jika BUKAN masyarakat -->
+            <div v-if="!isMasyarakat" class="form-field">
               <label class="field-label">OPD <span class="text-rose-500">*</span></label>
-              <select v-model="form.id_opd" required class="field-input">
+              <select v-model="form.id_opd" :required="!isMasyarakat" class="field-input">
                 <option value="">Pilih OPD</option>
-                <option v-for="opd in opdOptions" :key="opd.id" :value="opd.id">
+                <option v-for="opd in opdOptions" :key="opd.id_opd ?? opd.id" :value="opd.id_opd ?? opd.id">
                   {{ opd.nama_opd }}
                 </option>
               </select>
@@ -282,7 +283,7 @@
 
 <script setup>
 import Sidebar from '../../components/Sidebar.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
 import {
@@ -330,8 +331,22 @@ const filteredKelurahans = computed(() => {
   return allKelurahans.value.filter(k => k.id_kecamatan === Number(form.value.id_kecamatan))
 })
 
+// Cek apakah jenis inisiator yang dipilih adalah "Masyarakat"
+const isMasyarakat = computed(() => {
+  if (!form.value.id_jenis_inisiator) return false
+  const jenis = jenisInisiatorOptions.value.find(j => j.id === Number(form.value.id_jenis_inisiator) || j.id === form.value.id_jenis_inisiator)
+  return jenis?.nama_jenis_inisiator?.toLowerCase().includes('masyarakat') ?? false
+})
+
 function onKecamatanChange() {
   form.value.id_kelurahan = ''
+}
+
+function onJenisChange() {
+  // Reset id_opd jika beralih ke masyarakat
+  if (isMasyarakat.value) {
+    form.value.id_opd = ''
+  }
 }
 
 function triggerFileSelect() {
@@ -374,6 +389,7 @@ async function handleSubmit() {
     formData.append('nama_inisiator', form.value.nama_inisiator)
     if (form.value.id_jenis_inisiator) formData.append('id_jenis_inisiator', form.value.id_jenis_inisiator)
     formData.append('kontak', form.value.kontak)
+    if (form.value.id_kecamatan) formData.append('id_kecamatan', form.value.id_kecamatan)
     if (form.value.id_kelurahan) formData.append('id_kelurahan', form.value.id_kelurahan)
     if (form.value.id_opd) formData.append('id_opd', form.value.id_opd)
     if (form.value.id_masyarakat) formData.append('id_masyarakat', form.value.id_masyarakat)
