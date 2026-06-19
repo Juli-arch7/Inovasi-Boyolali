@@ -111,7 +111,6 @@
         <div v-else class="overflow-x-auto w-full">
           <table class="w-full border-collapse text-left">
             <thead>
-<<<<<<< HEAD
               <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-14 text-center">No</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider min-w-[200px]">Administrator</th>
@@ -146,23 +145,6 @@
                       </p>
                     </div>
                   </div>
-=======
-              <tr>
-                <th>Nama</th>
-                <th>Username / Email</th>
-                <th>Role</th>
-                <th>Level</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="admin in admins" :key="admin.id" :class="{ 'row-inactive': admin.is_active === false }">
-                <td style="font-weight: 600;">{{ admin.name }}</td>
-                <td>
-                  <div class="text-main">{{ admin.username }}</div>
-                  <div class="text-light" style="font-size: 0.8rem;">{{ admin.email }}</div>
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
                 </td>
 
                 <td class="p-4">
@@ -182,7 +164,6 @@
                     {{ admin.admin_profile?.level === 'super_admin' ? 'Super Admin' : 'Admin' }}
                   </span>
                 </td>
-<<<<<<< HEAD
 
                 <td class="p-4 text-center">
                   <button
@@ -208,68 +189,6 @@
                     <p class="text-xs text-slate-300 dark:text-slate-600">Tambahkan admin baru menggunakan form di atas</p>
                   </div>
                 </td>
-=======
-                <td>
-                  <span :class="['status-pill', admin.is_active !== false ? 'status-active' : 'status-inactive']">
-                    {{ admin.is_active !== false ? 'Aktif' : 'Nonaktif' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons" v-if="admin.id !== currentUserId">
-                    <button 
-                      :class="['btn', 'btn-sm', admin.is_active !== false ? 'btn-deactivate' : 'btn-activate']"
-                      @click="toggleAdminActive(admin)"
-                      :disabled="togglingAdmin === admin.id"
-                    >
-                      {{ admin.is_active !== false ? 'Nonaktifkan' : 'Aktifkan' }}
-                    </button>
-                  </div>
-                  <span v-else class="text-muted" style="font-size: 0.85rem; font-style: italic;">Anda</span>
-                </td>
-              </tr>
-              <tr v-if="admins.length === 0">
-                <td colspan="6" class="text-center py-4">Belum ada admin yang terdaftar.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Admin Action Logs Card -->
-      <div class="card mt-4">
-        <h3 class="section-title mb-4" style="display: flex; align-items: center; gap: 0.5rem;">
-          <i class='bx bx-history'></i> Log Aksi Administrator (Sistem)
-        </h3>
-        <div v-if="loadingLogs" class="text-center py-4 text-muted">Memuat log...</div>
-        <div v-else-if="logs.length === 0" class="text-center py-4 text-muted">Belum ada log aktivitas admin.</div>
-        <div v-else class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Waktu</th>
-                <th>Administrator</th>
-                <th>Aksi</th>
-                <th>Detail Aktivitas</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="log in logs" :key="log.id">
-                <td class="log-time" style="font-size: 0.85rem; color: var(--text-light); white-space: nowrap;">
-                  {{ formatDateTime(log.created_at) }}
-                </td>
-                <td>
-                  <span style="font-weight: 600;">{{ log.admin?.name || 'Unknown' }}</span>
-                  <span :class="['badge', `badge-${log.admin?.role}`]" style="margin-left: 0.5rem; font-size: 0.7rem; padding: 0.15rem 0.4rem;">
-                    {{ log.admin?.role }}
-                  </span>
-                </td>
-                <td>
-                  <span :class="['log-action-pill', `action-${log.action}`]">
-                    {{ getActionLabel(log.action) }}
-                  </span>
-                </td>
-                <td class="log-desc" style="font-size: 0.875rem; line-height: 1.4;">{{ log.description }}</td>
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
               </tr>
             </tbody>
           </table>
@@ -342,47 +261,9 @@ const showAddForm = ref(false)
 const submitting = ref(false)
 const formMsg = ref('')
 const formError = ref(false)
-<<<<<<< HEAD
 const showDeleteModal = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
-=======
-const togglingAdmin = ref(null)
-
-// Admin Logs
-const logs = ref([])
-const loadingLogs = ref(false)
-
-async function loadLogs() {
-  loadingLogs.value = true
-  try {
-    const res = await api.get('/admin/logs?target_type=user')
-    logs.value = res.data
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loadingLogs.value = false
-  }
-}
-
-function getActionLabel(action) {
-  switch(action) {
-    case 'toggle_user_active': return 'Toggle Aktif Akun';
-    case 'create_admin': return 'Tambah Admin';
-    case 'verify_product': return 'Verifikasi Inovasi';
-    case 'update_tahapan': return 'Update Tahapan';
-    default: return action;
-  }
-}
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  })
-}
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
 
 const form = ref({
   name: '', username: '', email: '', password: '', level: 'admin'
@@ -422,12 +303,7 @@ async function createAdmin() {
     formError.value = false
     form.value = { name: '', username: '', email: '', password: '', level: 'admin' }
     await loadAdmins()
-<<<<<<< HEAD
     setTimeout(() => { showAddForm.value = false; formMsg.value = '' }, 1500)
-=======
-    await loadLogs()
-    showAddForm.value = false
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
   } catch (e) {
     formMsg.value = e.response?.data?.message || 'Gagal menambahkan admin.'
     formError.value = true
@@ -436,7 +312,6 @@ async function createAdmin() {
   }
 }
 
-<<<<<<< HEAD
 function openDeleteModal(admin) {
   deleteTarget.value = admin
   showDeleteModal.value = true
@@ -450,35 +325,15 @@ async function confirmDelete() {
     toastStore.show(res.data.message || 'Admin berhasil dihapus.', 'success')
     showDeleteModal.value = false
     deleteTarget.value = null
-=======
-async function toggleAdminActive(admin) {
-  const action = admin.is_active !== false ? 'menonaktifkan' : 'mengaktifkan'
-  if (!confirm(`Apakah Anda yakin ingin ${action} administrator "${admin.name}"?`)) return
-  
-  togglingAdmin.value = admin.id
-  try {
-    const res = await api.put(`/admin/users/${admin.id}/toggle-active`)
-    alert(res.data.message || `Admin berhasil di${action}.`)
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
     await loadAdmins()
-    await loadLogs()
   } catch (e) {
-<<<<<<< HEAD
     toastStore.show(e.response?.data?.message || 'Gagal menghapus admin.', 'error')
   } finally {
     deleting.value = false
-=======
-    alert(e.response?.data?.message || `Gagal ${action} admin.`)
-  } finally {
-    togglingAdmin.value = null
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
   }
 }
 
-onMounted(async () => {
-  await loadAdmins()
-  await loadLogs()
-})
+onMounted(loadAdmins)
 </script>
 
 <style scoped>
@@ -495,7 +350,6 @@ onMounted(async () => {
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
 }
-<<<<<<< HEAD
 
 :is(.dark) .field-label {
   color: #94a3b8;
@@ -511,86 +365,6 @@ onMounted(async () => {
   font-size: 0.875rem;
   transition: all 0.15s ease;
   outline: none;
-=======
-.row-inactive {
-  opacity: 0.6;
-  background: #fafafa;
-}
-.status-pill {
-  padding: 0.25rem 0.75rem;
-  border-radius: 99px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
-}
-.status-active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-.status-inactive {
-  background: #fee2e2;
-  color: #dc2626;
-}
-.btn-deactivate {
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid #dc2626;
-  border-radius: 6px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.btn-deactivate:hover:not(:disabled) {
-  background: #fef2f2;
-}
-.btn-activate {
-  background: transparent;
-  color: #16a34a;
-  border: 1px solid #16a34a;
-  border-radius: 6px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.btn-activate:hover:not(:disabled) {
-  background: #f0fdf4;
-}
-.btn-deactivate:disabled,
-.btn-activate:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.log-action-pill {
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
-}
-.action-toggle_user_active {
-  background: #fef3c7;
-  color: #d97706;
-  border: 1px solid #fcd34d;
-}
-.action-create_admin {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-.badge-superadmin {
-  background: #fef3c7;
-  color: #d97706;
-}
-.badge-admin {
-  background: #e0f2fe;
-  color: #0284c7;
->>>>>>> 5f4bade7bf2c32223bf797b509a0f041f7bc15a8
 }
 
 .field-input:focus {
