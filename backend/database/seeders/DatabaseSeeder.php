@@ -132,7 +132,10 @@ class DatabaseSeeder extends Seeder
             'deskripsi' => 'Sistem integrasi pelayanan perizinan terpadu satu pintu untuk meningkatkan efisiensi dan transparansi pelayanan publik bagi masyarakat Boyolali.',
             'tahun_inovasi' => 2023,
             'status_kurasi' => 'approved',
-            'is_digital' => true
+            'is_digital' => true,
+            'views_count' => 1250,
+            'likes_count' => 412,
+            'downloads_count' => 189
         ]);
 
         // Product 2
@@ -146,7 +149,10 @@ class DatabaseSeeder extends Seeder
             'deskripsi' => 'Pelatihan dan pendampingan UMKM berbasis keunggulan lokal untuk mendorong kemandirian ekonomi desa di wilayah Kabupaten Boyolali.',
             'tahun_inovasi' => 2023,
             'status_kurasi' => 'approved',
-            'is_digital' => false
+            'is_digital' => false,
+            'views_count' => 945,
+            'likes_count' => 290,
+            'downloads_count' => 78
         ]);
 
         // Product 3
@@ -160,7 +166,10 @@ class DatabaseSeeder extends Seeder
             'deskripsi' => 'Platform penyediaan data sektoral yang terbuka, terintegrasi, dan mudah diakses oleh publik guna mendukung transparansi tata kelola daerah.',
             'tahun_inovasi' => 2024,
             'status_kurasi' => 'approved',
-            'is_digital' => true
+            'is_digital' => true,
+            'views_count' => 3120,
+            'likes_count' => 875,
+            'downloads_count' => 430
         ]);
     }
 }

@@ -64,49 +64,56 @@ class InisiatorController extends Controller
         }
 
         $request->validate([
-            'nama_inovasi' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'tahun_inovasi' => 'required|digits:4',
-            'id_bentuk' => 'required|exists:bentuk_inovasis,id',
-            'nama_inisiator' => 'required|string|max:255',
+            'nama_inovasi'       => 'required|string|max:255',
+            'deskripsi'          => 'nullable|string',
+            'tahun_inovasi'      => 'required|digits:4',
+            'id_bentuk'          => 'required|exists:bentuk_inovasis,id',
+            'id_tahapan'         => 'nullable|exists:tahapan_inovasis,id',
+            'id_opd'             => 'nullable|exists:opds,id',
+            'nama_inisiator'     => 'required|string|max:255',
             'id_jenis_inisiator' => 'required|exists:jenis_inisiators,id',
-            'kontak' => 'required|string|max:255',
-            'id_kelurahan' => 'required|exists:kelurahans,id',
-            'link_marketplace' => 'nullable|string|max:500',
-            'file_dokumentasi' => 'nullable|file|max:10240'
+            'kontak'             => 'required|string|max:255',
+            'id_kelurahan'       => 'required|exists:kelurahans,id',
+            'is_digital'         => 'nullable',
+            'link_marketplace'   => 'nullable|string|max:500',
+            'file_dokumentasi'   => 'nullable|file|max:10240'
         ]);
 
         // Update inisiator profile
         $user->inisiatorProfile->update([
-            'nama_inisiator' => $request->input('nama_inisiator'),
+            'nama_inisiator'     => $request->input('nama_inisiator'),
             'id_jenis_inisiator' => $request->input('id_jenis_inisiator'),
-            'kontak' => $request->input('kontak'),
-            'id_kelurahan' => $request->input('id_kelurahan')
+            'kontak'             => $request->input('kontak'),
+            'id_kelurahan'       => $request->input('id_kelurahan'),
         ]);
+
+        $opdId      = $request->input('id_opd') ?: OPD::first()?->id ?? 1;
+        $tahapanId  = $request->input('id_tahapan') ?: TahapanInovasi::first()?->id ?? 1;
+        $isDigital  = filter_var($request->input('is_digital', '0'), FILTER_VALIDATE_BOOLEAN);
 
         // Create product
         $product = ProdukInovasi::create([
-            'id_inisiator' => $user->inisiatorProfile->id,
-            'id_opd' => OPD::first()?->id ?? 1,
-            'id_bentuk' => $request->input('id_bentuk'),
-            'id_tahapan' => TahapanInovasi::first()?->id ?? 1,
-            'nama_inovasi' => $request->input('nama_inovasi'),
-            'deskripsi' => $request->input('deskripsi'),
+            'id_inisiator'  => $user->inisiatorProfile->id,
+            'id_opd'        => $opdId,
+            'id_bentuk'     => $request->input('id_bentuk'),
+            'id_tahapan'    => $tahapanId,
+            'nama_inovasi'  => $request->input('nama_inovasi'),
+            'deskripsi'     => $request->input('deskripsi'),
             'tahun_inovasi' => $request->input('tahun_inovasi'),
+            'is_digital'    => $isDigital,
             'status_kurasi' => 'pending',
-            'is_digital' => false
         ]);
 
         // Save file dokumentasi
         if ($request->hasFile('file_dokumentasi')) {
-            $file = $request->file('file_dokumentasi');
+            $file     = $request->file('file_dokumentasi');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads'), $fileName);
             $product->mediaInovasi()->create([
                 'jenis_media' => 'file',
-                'isi_konten' => '/uploads/' . $fileName,
-                'is_primary' => true,
-                'urutan' => 0
+                'isi_konten'  => '/uploads/' . $fileName,
+                'is_primary'  => true,
+                'urutan'      => 0
             ]);
         }
 
@@ -114,9 +121,9 @@ class InisiatorController extends Controller
         if ($request->filled('link_marketplace')) {
             $product->mediaInovasi()->create([
                 'jenis_media' => 'link',
-                'isi_konten' => $request->input('link_marketplace'),
-                'is_primary' => false,
-                'urutan' => 1
+                'isi_konten'  => $request->input('link_marketplace'),
+                'is_primary'  => false,
+                'urutan'      => 1
             ]);
         }
 
@@ -139,33 +146,51 @@ class InisiatorController extends Controller
         }
 
         $request->validate([
-            'nama_inovasi' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'tahun_inovasi' => 'required|digits:4',
-            'id_bentuk' => 'required|exists:bentuk_inovasis,id',
-            'nama_inisiator' => 'required|string|max:255',
+            'nama_inovasi'       => 'required|string|max:255',
+            'deskripsi'          => 'nullable|string',
+            'tahun_inovasi'      => 'required|digits:4',
+            'id_bentuk'          => 'required|exists:bentuk_inovasis,id',
+            'id_tahapan'         => 'nullable|exists:tahapan_inovasis,id',
+            'id_opd'             => 'nullable|exists:opds,id',
+            'nama_inisiator'     => 'required|string|max:255',
             'id_jenis_inisiator' => 'required|exists:jenis_inisiators,id',
-            'kontak' => 'required|string|max:255',
-            'id_kelurahan' => 'required|exists:kelurahans,id',
-            'link_marketplace' => 'nullable|string|max:500',
-            'file_dokumentasi' => 'nullable|file|max:10240'
+            'kontak'             => 'required|string|max:255',
+            'id_kelurahan'       => 'required|exists:kelurahans,id',
+            'is_digital'         => 'nullable',
+            'link_marketplace'   => 'nullable|string|max:500',
+            'file_dokumentasi'   => 'nullable|file|max:10240'
         ]);
 
         // Update inisiator profile
         $user->inisiatorProfile->update([
-            'nama_inisiator' => $request->input('nama_inisiator'),
+            'nama_inisiator'     => $request->input('nama_inisiator'),
             'id_jenis_inisiator' => $request->input('id_jenis_inisiator'),
-            'kontak' => $request->input('kontak'),
-            'id_kelurahan' => $request->input('id_kelurahan')
+            'kontak'             => $request->input('kontak'),
+            'id_kelurahan'       => $request->input('id_kelurahan'),
         ]);
 
+        $isDigital = filter_var($request->input('is_digital', $product->is_digital), FILTER_VALIDATE_BOOLEAN);
+
         // Update product
-        $product->update([
-            'nama_inovasi' => $request->input('nama_inovasi'),
-            'deskripsi' => $request->input('deskripsi'),
+        $updateData = [
+            'nama_inovasi'  => $request->input('nama_inovasi'),
+            'deskripsi'     => $request->input('deskripsi'),
             'tahun_inovasi' => $request->input('tahun_inovasi'),
-            'id_bentuk' => $request->input('id_bentuk'),
-        ]);
+            'id_bentuk'     => $request->input('id_bentuk'),
+            'is_digital'    => $isDigital,
+            // Reset status to pending when re-submitted
+            'status_kurasi' => 'pending',
+            'alasan_penolakan' => null,
+        ];
+
+        if ($request->input('id_tahapan')) {
+            $updateData['id_tahapan'] = $request->input('id_tahapan');
+        }
+        if ($request->input('id_opd')) {
+            $updateData['id_opd'] = $request->input('id_opd');
+        }
+
+        $product->update($updateData);
 
         // Save file dokumentasi
         if ($request->hasFile('file_dokumentasi')) {
@@ -178,14 +203,14 @@ class InisiatorController extends Controller
                 $oldMedia->delete();
             }
 
-            $file = $request->file('file_dokumentasi');
+            $file     = $request->file('file_dokumentasi');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads'), $fileName);
             $product->mediaInovasi()->create([
                 'jenis_media' => 'file',
-                'isi_konten' => '/uploads/' . $fileName,
-                'is_primary' => true,
-                'urutan' => 0
+                'isi_konten'  => '/uploads/' . $fileName,
+                'is_primary'  => true,
+                'urutan'      => 0
             ]);
         }
 

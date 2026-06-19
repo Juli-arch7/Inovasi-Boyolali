@@ -25,6 +25,9 @@ class PublicController extends Controller
         $product = ProdukInovasi::where('status_kurasi', 'approved')
             ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile'])
             ->findOrFail($id);
+            
+        $product->increment('views_count');
+        
         return response()->json($product);
     }
 
@@ -36,5 +39,19 @@ class PublicController extends Controller
             'bentuk_inovasis' => BentukInovasi::all(),
             'opds' => OPD::all(),
         ]);
+    }
+
+    public function incrementLike($id)
+    {
+        $product = ProdukInovasi::findOrFail($id);
+        $product->increment('likes_count');
+        return response()->json(['success' => true, 'likes_count' => $product->likes_count]);
+    }
+
+    public function incrementDownload($id)
+    {
+        $product = ProdukInovasi::findOrFail($id);
+        $product->increment('downloads_count');
+        return response()->json(['success' => true, 'downloads_count' => $product->downloads_count]);
     }
 }

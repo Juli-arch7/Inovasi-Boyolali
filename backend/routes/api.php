@@ -17,6 +17,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/public/products', [PublicController::class, 'getCuratedProducts']);
 Route::get('/public/products/{id}', [PublicController::class, 'getProductDetail']);
 Route::get('/public/metadata', [PublicController::class, 'getMetadata']);
+Route::post('/public/products/{id}/like', [PublicController::class, 'incrementLike']);
+Route::post('/public/products/{id}/download', [PublicController::class, 'incrementDownload']);
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -43,4 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/inisiator/products', [InisiatorController::class, 'submitProduct']);
     Route::get('/inisiator/products/{id}', [InisiatorController::class, 'getProductDetail']);
     Route::put('/inisiator/products/{id}', [InisiatorController::class, 'updateProduct']);
+    // Support multipart/form-data PUT via method spoofing (_method=PUT)
+    Route::post('/inisiator/products/{id}', [InisiatorController::class, 'updateProduct']);
 });

@@ -1,141 +1,322 @@
 <template>
-  <div class="dashboard-layout">
+  <div class="flex-1 flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950/40 transition-colors duration-300">
     <Sidebar />
-    <main class="content-area">
-      <div v-if="loading" class="text-center py-5">Memuat detail...</div>
-      <div v-else-if="!product" class="text-center py-5">Produk tidak ditemukan.</div>
+
+    <main class="flex-1 p-6 sm:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+
+      <!-- Loading State -->
+      <div v-if="loading" class="space-y-6">
+        <div class="skeleton h-8 w-48 rounded-xl"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-5">
+            <div class="skeleton h-64 rounded-2xl"></div>
+            <div class="skeleton h-48 rounded-2xl"></div>
+          </div>
+          <div class="skeleton h-80 rounded-2xl"></div>
+        </div>
+      </div>
+
+      <!-- Not Found -->
+      <div v-else-if="!product" class="flex flex-col items-center justify-center py-24 gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+          <FileX class="w-8 h-8 text-slate-300 dark:text-slate-600" />
+        </div>
+        <p class="text-sm font-semibold text-slate-500">Produk tidak ditemukan.</p>
+        <button
+          @click="$router.push('/admin/verifikasi')"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-white hover:bg-blue-700 transition-all cursor-pointer"
+        >
+          <ArrowLeft class="w-4 h-4" /> Kembali
+        </button>
+      </div>
+
+      <!-- Content -->
       <div v-else>
-        <div class="detail-header mb-4">
-          <button class="btn btn-outline btn-sm mb-2" @click="$router.push('/admin/verifikasi')">← Kembali</button>
-          <h1 class="page-title">Detail Verifikasi Inovasi</h1>
+        <!-- Page Header -->
+        <div class="pb-6 mb-8 border-b border-slate-200/50 dark:border-slate-800/50">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <button
+                @click="$router.push('/admin/verifikasi')"
+                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <ArrowLeft class="w-4 h-4" /> Kembali
+              </button>
+              <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Detail Verifikasi</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                  Tinjau dan verifikasi ajuan inovasi ini.
+                </p>
+              </div>
+            </div>
+            <!-- Current Status Badge -->
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold self-start"
+              :class="getStatusBadgeClass(product.status_kurasi)"
+            >
+              <span class="w-2 h-2 rounded-full" :class="getStatusDotColor(product.status_kurasi)"></span>
+              {{ getStatusLabel(product.status_kurasi) }}
+            </span>
+          </div>
         </div>
 
-        <div class="detail-layout">
-          <div class="detail-main">
-            <div class="card mb-4">
-              <h2 class="section-title mb-4">{{ product.nama_inovasi }}</h2>
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              <!-- Product Images -->
-              <div class="product-images mb-4">
-                <div v-if="productImages.length > 0" class="image-gallery">
-                  <img
-                    v-for="(img, idx) in productImages"
-                    :key="idx"
-                    :src="getImageUrl(img.isi_konten)"
-                    :alt="'Foto produk ' + (idx + 1)"
-                    class="gallery-img"
-                    @error="handleImgError($event)"
-                  />
+          <!-- Left: Main Content -->
+          <div class="lg:col-span-2 space-y-5">
+
+            <!-- Product Info Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+              <!-- Header with colored accent -->
+              <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800/50 flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  :class="getStatusBgLight(product.status_kurasi)">
+                  <FileCheck class="w-6 h-6" :class="getStatusTextColor(product.status_kurasi)" />
                 </div>
-                <div v-else class="no-image-placeholder">
-                  <i class='bx bx-image-alt'></i>
-                  <span>Tidak ada foto produk</span>
+                <div>
+                  <h2 class="text-xl font-extrabold text-slate-900 dark:text-white leading-snug">
+                    {{ product.nama_inovasi }}
+                  </h2>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Tahun {{ product.tahun_inovasi }} · {{ product.opd?.nama_opd || 'Umum' }}
+                    <span v-if="product.is_digital" class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary">Digital</span>
+                  </p>
                 </div>
               </div>
 
-              <div class="description-section">
-                <h3 class="sidebar-title">Deskripsi Inovasi</h3>
-                <p class="description-text">
+              <!-- Image Gallery -->
+              <div class="p-6">
+                <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Foto Dokumentasi</h3>
+                <div v-if="productImages.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div
+                    v-for="(img, idx) in productImages"
+                    :key="idx"
+                    class="relative group overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 aspect-video"
+                  >
+                    <img
+                      :src="getImageUrl(img.isi_konten)"
+                      :alt="'Foto produk ' + (idx + 1)"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      @error="handleImgError($event)"
+                    />
+                  </div>
+                </div>
+                <div v-else class="flex flex-col items-center justify-center h-32 rounded-xl bg-slate-50 dark:bg-slate-950/40 border-2 border-dashed border-slate-200 dark:border-slate-800 gap-2">
+                  <ImageOff class="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                  <p class="text-xs font-medium text-slate-400">Tidak ada foto dokumentasi</p>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="px-6 pb-6">
+                <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Deskripsi Inovasi</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   {{ product.deskripsi || 'Tidak ada deskripsi.' }}
                 </p>
               </div>
             </div>
-          </div>
 
-          <aside class="detail-sidebar">
-            <div class="admin-info-card card">
-              <h3 class="sidebar-title">Informasi Administratif</h3>
-              <div class="info-list">
-                <div class="info-item">
-                  <label>Status</label>
-                  <span :class="['badge', `badge-${product.status_kurasi}`]">{{ product.status_kurasi }}</span>
+            <!-- Rejection Note (if rejected) -->
+            <div v-if="product.alasan_penolakan" class="bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-900/40 p-5">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center flex-shrink-0">
+                  <XCircle class="w-5 h-5 text-rose-600" />
                 </div>
-                <div class="info-item" v-if="product.alasan_penolakan">
-                  <label>Alasan Penolakan</label>
-                  <span class="rejection-reason-text">{{ product.alasan_penolakan }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Tahapan</label>
-                  <span>{{ product.tahapan_inovasi?.nama_tahapan || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Inisiator</label>
-                  <span>{{ product.inisiator_profile?.nama_inisiator || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <label>OPD</label>
-                  <span>{{ product.opd?.nama_opd || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Tanggal Review</label>
-                  <span>{{ product.tanggal_review ? formatDate(product.tanggal_review) : '-' }}</span>
+                <div>
+                  <h4 class="text-sm font-bold text-rose-700 dark:text-rose-400 mb-1">Alasan Penolakan</h4>
+                  <p class="text-sm text-rose-600 dark:text-rose-400/80 italic leading-relaxed">
+                    "{{ product.alasan_penolakan }}"
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div class="action-buttons mt-4">
+          </div>
+
+          <!-- Right: Sidebar -->
+          <div class="space-y-5">
+
+            <!-- Admin Actions -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
+              <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                Tindakan Verifikasi
+              </h3>
+
+              <div class="space-y-3">
+                <!-- Approve Button -->
                 <button
-                  class="btn btn-primary w-full mb-2"
                   @click="handleVerify('approved')"
                   :disabled="submitting || product.status_kurasi === 'approved'"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="product.status_kurasi === 'approved'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40'
+                    : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'"
                 >
-                  <i class='bx bx-check'></i> SETUJUI
+                  <CheckCircle2 class="w-4 h-4" />
+                  {{ product.status_kurasi === 'approved' ? 'Sudah Disetujui' : 'Setujui Inovasi' }}
                 </button>
+
+                <!-- Reject Button -->
                 <button
-                  class="btn-reject w-full"
                   @click="openRejectModal"
                   :disabled="submitting || product.status_kurasi === 'rejected'"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="product.status_kurasi === 'rejected'
+                    ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/40'
+                    : 'border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20'"
                 >
-                  <i class='bx bx-x'></i> TOLAK
+                  <XCircle class="w-4 h-4" />
+                  {{ product.status_kurasi === 'rejected' ? 'Sudah Ditolak' : 'Tolak Inovasi' }}
                 </button>
               </div>
             </div>
-          </aside>
+
+            <!-- Info Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
+              <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                Informasi Administratif
+              </h3>
+
+              <div class="space-y-4">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tahapan</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {{ product.tahapan_inovasi?.nama_tahapan || '-' }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Inisiator</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {{ product.inisiator_profile?.nama_inisiator || '-' }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kontak Inisiator</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <a v-if="product.inisiator_profile?.kontak" :href="'tel:' + product.inisiator_profile.kontak" class="hover:text-primary transition-colors">{{ product.inisiator_profile.kontak }}</a>
+                    <span v-else>-</span>
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">OPD</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {{ product.opd?.nama_opd || '-' }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal Review</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {{ product.tanggal_review ? formatDate(product.tanggal_review) : '-' }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jenis</p>
+                  <span class="inline-block px-2.5 py-1 text-[10px] font-bold rounded-lg text-primary bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30">
+                    {{ product.is_digital ? 'Digital' : 'Non-Digital' }}
+                  </span>
+                </div>
+                <div v-if="product.link_marketplace">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Link Referensi</p>
+                  <a
+                    :href="product.link_marketplace"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <ExternalLink class="w-3 h-3" />
+                    Lihat Link
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- Rejection Modal -->
+    <!-- Reject Modal -->
     <Teleport to="body">
-      <div v-if="showRejectModal" class="modal-overlay" @click.self="showRejectModal = false">
-        <div class="modal-box">
-          <div class="modal-header">
-            <h3>Alasan Penolakan</h3>
-            <button class="modal-close" @click="showRejectModal = false">×</button>
-          </div>
-          <div class="modal-body">
-            <p class="modal-subtitle">Pilih atau ketik alasan penolakan untuk inovasi ini:</p>
+      <Transition name="modal">
+        <div v-if="showRejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showRejectModal = false">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+          <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-[520px] shadow-2xl overflow-hidden border border-slate-200/50 dark:border-slate-800/50 animate-scale-in">
+            <!-- Modal Header -->
+            <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800/50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center">
+                    <XCircle class="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Tolak Inovasi</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Berikan alasan penolakan yang jelas</p>
+                  </div>
+                </div>
+                <button
+                  @click="showRejectModal = false"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-            <div class="preset-reasons">
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">Pilih alasan cepat:</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="reason in presetReasons"
+                    :key="reason"
+                    @click="rejectionReason = reason"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer"
+                    :class="rejectionReason === reason
+                      ? 'bg-rose-100 dark:bg-rose-950/40 border-rose-400 text-rose-700 dark:text-rose-400'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-600'"
+                  >
+                    {{ reason }}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Alasan Penolakan <span class="text-rose-500">*</span>
+                </label>
+                <textarea
+                  v-model="rejectionReason"
+                  rows="4"
+                  class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none"
+                  placeholder="Tulis alasan penolakan secara lengkap..."
+                ></textarea>
+                <p v-if="rejectionError" class="text-xs text-rose-500 font-medium mt-1">{{ rejectionError }}</p>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/50 flex gap-3 justify-end">
               <button
-                v-for="reason in presetReasons"
-                :key="reason"
-                class="preset-btn"
-                :class="{ selected: rejectionReason === reason }"
-                @click="rejectionReason = reason"
+                @click="showRejectModal = false"
+                class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
               >
-                {{ reason }}
+                Batal
+              </button>
+              <button
+                @click="submitRejection"
+                :disabled="submitting"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+                <XCircle v-else class="w-4 h-4" />
+                {{ submitting ? 'Memproses...' : 'Konfirmasi Tolak' }}
               </button>
             </div>
-
-            <div class="reason-input-group mt-3">
-              <label>Alasan Penolakan *</label>
-              <textarea
-                v-model="rejectionReason"
-                rows="4"
-                class="form-control"
-                placeholder="Tulis alasan penolakan secara lengkap..."
-              ></textarea>
-              <span v-if="rejectionError" class="error-text">{{ rejectionError }}</span>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline" @click="showRejectModal = false">Batal</button>
-            <button class="btn-reject-confirm" @click="submitRejection" :disabled="submitting">
-              <i class='bx bx-x-circle'></i> Konfirmasi Tolak
-            </button>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -144,10 +325,17 @@
 import Sidebar from '../../components/Sidebar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
+import {
+  ArrowLeft, FileCheck, FileX, CheckCircle2, XCircle, X,
+  ImageOff, ExternalLink, Loader2
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
+const toastStore = useToastStore()
+
 const product = ref(null)
 const loading = ref(true)
 const submitting = ref(false)
@@ -156,17 +344,19 @@ const rejectionReason = ref('')
 const rejectionError = ref('')
 
 const presetReasons = [
-  'Deskripsi produk kurang lengkap',
-  'Gambar produk tidak sesuai',
-  'Produk tidak memenuhi ketentuan platform',
-  'Kategori produk salah',
-  'Informasi masih kurang jelas',
-  'Produk duplikat',
+  'Deskripsi kurang lengkap',
+  'Gambar tidak sesuai',
+  'Tidak memenuhi ketentuan',
+  'Kategori salah',
+  'Informasi kurang jelas',
+  'Duplikat produk',
 ]
 
 const productImages = computed(() => {
   if (!product.value?.media_inovasi) return []
-  return product.value.media_inovasi.filter(m => m.jenis_media === 'foto' || m.jenis_media === 'image' || m.jenis_media === 'foto_produk')
+  return product.value.media_inovasi.filter(
+    m => m.jenis_media === 'foto' || m.jenis_media === 'image' || m.jenis_media === 'foto_produk'
+  )
 })
 
 function getImageUrl(path) {
@@ -184,26 +374,69 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
+function getStatusBadgeClass(status) {
+  const map = {
+    pending: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30',
+    approved: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30',
+    rejected: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30',
+  }
+  return map[status] || 'bg-slate-50 text-slate-600 border border-slate-200'
+}
+
+function getStatusBgLight(status) {
+  const map = {
+    pending: 'bg-amber-100 dark:bg-amber-950/30',
+    approved: 'bg-emerald-100 dark:bg-emerald-950/30',
+    rejected: 'bg-rose-100 dark:bg-rose-950/30',
+  }
+  return map[status] || 'bg-slate-100 dark:bg-slate-800'
+}
+
+function getStatusTextColor(status) {
+  const map = {
+    pending: 'text-amber-600 dark:text-amber-400',
+    approved: 'text-emerald-600 dark:text-emerald-400',
+    rejected: 'text-rose-600 dark:text-rose-400',
+  }
+  return map[status] || 'text-slate-500'
+}
+
+function getStatusDotColor(status) {
+  const map = {
+    pending: 'bg-amber-500 animate-pulse',
+    approved: 'bg-emerald-500',
+    rejected: 'bg-rose-500',
+  }
+  return map[status] || 'bg-slate-400'
+}
+
+function getStatusLabel(status) {
+  const map = { pending: 'Menunggu Review', approved: 'Disetujui', rejected: 'Ditolak' }
+  return map[status] || status
+}
+
 async function loadProduct() {
+  loading.value = true
   try {
     const res = await api.get(`/admin/products/${route.params.id}`)
     product.value = res.data
   } catch (e) {
     console.error('Failed to load product', e)
+    toastStore.show('Gagal memuat detail inovasi.', 'error')
   } finally {
     loading.value = false
   }
 }
 
 async function handleVerify(status) {
-  if (!confirm(`Apakah Anda yakin ingin menyetujui inovasi ini?`)) return
+  if (!confirm('Apakah Anda yakin ingin menyetujui inovasi ini?')) return
   submitting.value = true
   try {
     await api.put(`/admin/products/${route.params.id}/verify`, { status_kurasi: status })
-    alert('Inovasi berhasil disetujui.')
+    toastStore.show('Inovasi berhasil disetujui!', 'success')
     await loadProduct()
   } catch (e) {
-    alert(e.response?.data?.message || 'Gagal mengubah status.')
+    toastStore.show(e.response?.data?.message || 'Gagal mengubah status.', 'error')
   } finally {
     submitting.value = false
   }
@@ -227,10 +460,10 @@ async function submitRejection() {
       alasan_penolakan: rejectionReason.value.trim()
     })
     showRejectModal.value = false
+    toastStore.show('Inovasi berhasil ditolak.', 'success')
     await loadProduct()
-    alert('Inovasi berhasil ditolak.')
   } catch (e) {
-    alert(e.response?.data?.message || 'Gagal menolak produk.')
+    toastStore.show(e.response?.data?.message || 'Gagal menolak produk.', 'error')
   } finally {
     submitting.value = false
   }
@@ -240,260 +473,17 @@ onMounted(loadProduct)
 </script>
 
 <style scoped>
-.detail-layout {
-  display: flex;
-  gap: 2rem;
-}
-
-.detail-main {
-  flex: 2;
-}
-
-.detail-sidebar {
-  flex: 1;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.sidebar-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--primary-light);
-}
-
-.description-text {
-  line-height: 1.8;
-  color: var(--text-muted);
-}
-
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.info-item label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-light);
-  text-transform: uppercase;
-  margin-bottom: 0.25rem;
-}
-
-.info-item span {
-  font-size: 0.9375rem;
-  font-weight: 500;
-}
-
-.rejection-reason-text {
-  color: #dc2626;
-  font-size: 0.875rem !important;
-  font-style: italic;
-}
-
-/* Image Gallery */
-.image-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.75rem;
-}
-
-.gallery-img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.no-image-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  background: var(--bg-light, #f8fafc);
-  border-radius: 8px;
-  color: var(--text-muted);
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.no-image-placeholder i {
-  font-size: 2rem;
-  opacity: 0.4;
-}
-
-/* Action Buttons */
-.btn-reject {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.625rem 1.25rem;
-  background: transparent;
-  color: #dc2626;
-  border: 1.5px solid #dc2626;
-  border-radius: var(--border-radius, 8px);
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-reject:hover:not(:disabled) {
-  background: #fef2f2;
-}
-
-.btn-reject:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 1rem;
-}
-
-.modal-box {
-  background: white;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 520px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  overflow: hidden;
-  animation: modalIn 0.2s ease;
-}
-
-@keyframes modalIn {
-  from { transform: scale(0.9); opacity: 0; }
+@keyframes scale-in {
+  from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
 }
-
-.modal-header h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin: 0;
+.modal-enter-active, .modal-leave-active {
+  transition: opacity 0.2s ease;
 }
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  color: var(--text-muted);
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.modal-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
-.preset-reasons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.preset-btn {
-  padding: 0.4rem 0.9rem;
-  border-radius: 99px;
-  border: 1px solid var(--border-color, #e5e7eb);
-  background: #f9fafb;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.preset-btn:hover {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.preset-btn.selected {
-  background: #fef2f2;
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.reason-input-group label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.error-text {
-  color: #dc2626;
-  font-size: 0.8125rem;
-  margin-top: 0.25rem;
-  display: block;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-  justify-content: flex-end;
-}
-
-.btn-reject-confirm {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.625rem 1.25rem;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-reject-confirm:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.btn-reject-confirm:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
 }
 </style>

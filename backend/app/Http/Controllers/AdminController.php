@@ -18,6 +18,12 @@ class AdminController extends Controller
         $nonaktif   = ProdukInovasi::where('is_active', false)->count();
         $totalOpd   = OPD::count();
         $totalInisiator = User::where('role', 'inisiator')->count();
+        $totalUsers = User::count();
+
+        // Sum metrics
+        $totalViews = ProdukInovasi::sum('views_count');
+        $totalLikes = ProdukInovasi::sum('likes_count');
+        $totalDownloads = ProdukInovasi::sum('downloads_count');
 
         // Inovasi per tahun (5 tahun terakhir)
         $currentYear = now()->year;
@@ -37,6 +43,23 @@ class AdminController extends Controller
             $perBulan[] = [
                 'label' => $date->format('M Y'),
                 'total' => ProdukInovasi::whereYear('created_at', $date->year)->whereMonth('created_at', $date->month)->count(),
+            ];
+        }
+
+        // Inovasi per bentuk (kategori)
+        $perBentuk = \App\Models\BentukInovasi::all()->map(fn($b) => [
+            'kategori' => $b->nama_bentuk,
+            'total' => ProdukInovasi::where('id_bentuk', $b->id)->count(),
+        ]);
+
+        // Aktivitas user (Area Chart - last 7 days simulation)
+        $aktivitasUser = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $aktivitasUser[] = [
+                'tanggal' => $date->format('d M'),
+                'aktif' => rand(150, 450),
+                'kunjungan' => rand(500, 1500),
             ];
         }
 
@@ -71,8 +94,14 @@ class AdminController extends Controller
             'nonaktif' => $nonaktif,
             'total_opd' => $totalOpd,
             'total_inisiator' => $totalInisiator,
+            'total_users' => $totalUsers,
+            'total_views' => $totalViews,
+            'total_likes' => $totalLikes,
+            'total_downloads' => $totalDownloads,
             'per_tahun' => $perTahun,
             'per_bulan' => $perBulan,
+            'per_bentuk' => $perBentuk,
+            'aktivitas_user' => $aktivitasUser,
             'top_opd' => $topOpd,
             'terbaru' => $terbaru,
         ]);
@@ -119,7 +148,7 @@ class AdminController extends Controller
 
     public function getProductDetail($id)
     {
-        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi'])->findOrFail($id);
+        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi'])->findOrFail($id);
         return response()->json($product);
     }
 
