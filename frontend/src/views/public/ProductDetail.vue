@@ -152,6 +152,40 @@
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Tahun Peluncuran</span>
                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ product.tahun_inovasi }}</span>
               </div>
+
+              <!-- Kontak Verifikator (Khusus untuk Inisiator) -->
+              <div v-if="isInisiatorRoute && product.admin_profile" class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Hubungi Verifikator</h4>
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase">Nama Admin</span>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ product.admin_profile.nama_admin }}</span>
+                  </div>
+                  <div v-if="product.admin_profile.kontak" class="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase">No. WhatsApp</span>
+                    <a :href="'https://wa.me/' + product.admin_profile.kontak" target="_blank" rel="noopener" class="text-sm font-bold text-primary hover:underline">
+                      {{ product.admin_profile.kontak }}
+                    </a>
+                  </div>
+                  <div v-if="product.admin_profile.user?.email" class="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase">Email</span>
+                    <a :href="'mailto:' + product.admin_profile.user.email" class="text-sm font-bold text-primary hover:underline">
+                      {{ product.admin_profile.user.email }}
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Fallback general admin contact if product has no specific admin verifier (e.g. pending) -->
+              <div v-else-if="isInisiatorRoute && !product.admin_profile" class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Hubungi Admin Bapperida</h4>
+                <div class="flex items-center justify-between py-1">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase">Email Admin</span>
+                  <a href="mailto:superadmin@inv.com" class="text-sm font-bold text-primary hover:underline">
+                    superadmin@inv.com
+                  </a>
+                </div>
+              </div>
             </div>
 
             <!-- Stats counter display -->
@@ -256,6 +290,9 @@ const downloads = ref(0)
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')
 
+// Detect if accessed from inisiator or public route
+const isInisiatorRoute = computed(() => route.path.startsWith('/inisiator'))
+
 function getImageUrl(path) {
   if (!path) return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop'
   if (path.startsWith('http')) return path
@@ -277,6 +314,7 @@ const mainImage = computed(() => {
 })
 
 const marketplaceLink = computed(() => {
+  if (product.value?.link_marketplace) return product.value.link_marketplace
   if (!product.value?.media_inovasi) return null
   const link = product.value.media_inovasi.find(m => m.jenis_media === 'link')
   return link?.isi_konten || null

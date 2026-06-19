@@ -117,7 +117,8 @@
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Username</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Email</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Role</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center w-28">Aksi</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Status</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center w-36">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
@@ -166,15 +167,34 @@
                 </td>
 
                 <td class="p-4 text-center">
-                  <button
-                    v-if="admin.id !== currentUserId"
-                    @click="openDeleteModal(admin)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                  <span
+                    class="px-2.5 py-1 rounded-lg text-xs font-bold"
+                    :class="admin.is_active !== false ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30'"
                   >
-                    <Trash2 class="w-3.5 h-3.5" />
-                    Hapus
-                  </button>
-                  <span v-else class="text-xs text-slate-400 italic">—</span>
+                    {{ admin.is_active !== false ? 'Aktif' : 'Nonaktif' }}
+                  </span>
+                </td>
+
+                <td class="p-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <button
+                      v-if="admin.id !== currentUserId"
+                      @click="toggleAdminActive(admin)"
+                      :disabled="togglingAdmin === admin.id"
+                      class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      :class="admin.is_active !== false ? 'border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/40 dark:text-rose-400 dark:bg-rose-950/20 dark:hover:bg-rose-900/30' : 'border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-900/40 dark:text-emerald-400 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30'"
+                    >
+                      {{ admin.is_active !== false ? 'Nonaktifkan' : 'Aktifkan' }}
+                    </button>
+                    <button
+                      v-if="admin.id !== currentUserId"
+                      @click="openDeleteModal(admin)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </button>
+                    <span v-else class="text-xs text-slate-400 italic">—</span>
+                  </div>
                 </td>
               </tr>
 
@@ -199,6 +219,60 @@
           <p class="text-xs text-slate-400 font-medium">
             Total <span class="text-slate-600 dark:text-slate-300 font-bold">{{ admins.length }}</span> administrator
           </p>
+        </div>
+      </div>
+
+      <!-- Admin Action Logs Card -->
+      <div class="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+            <History class="w-5 h-5 text-indigo-500" />
+          </div>
+          <h2 class="text-base font-bold text-slate-800 dark:text-white">Log Aksi Sistem</h2>
+        </div>
+
+        <div v-if="loadingLogs" class="p-8 flex justify-center">
+          <Loader2 class="w-6 h-6 animate-spin text-slate-400" />
+        </div>
+        
+        <div v-else-if="logs.length === 0" class="p-16 text-center">
+          <p class="text-sm font-semibold text-slate-400">Belum ada log aktivitas.</p>
+        </div>
+        
+        <div v-else class="overflow-x-auto w-full">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
+              <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
+                <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  {{ formatDateTime(log.created_at) }}
+                </td>
+                <td class="p-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white">{{ log.admin?.name || 'Unknown' }}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      {{ log.admin?.role }}
+                    </span>
+                  </div>
+                </td>
+                <td class="p-4 text-center">
+                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    {{ getActionLabel(log.action) }}
+                  </span>
+                </td>
+                <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
+                  {{ log.description }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -250,7 +324,7 @@ import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
   UserPlus, X, Save, Trash2, UserX, Shield, Crown,
-  AlertTriangle, AlertCircle, CheckCircle2, Loader2
+  AlertTriangle, AlertCircle, CheckCircle2, Loader2, History
 } from 'lucide-vue-next'
 
 const toastStore = useToastStore()
@@ -264,6 +338,40 @@ const formError = ref(false)
 const showDeleteModal = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
+const togglingAdmin = ref(null)
+
+const logs = ref([])
+const loadingLogs = ref(false)
+
+async function loadLogs() {
+  loadingLogs.value = true
+  try {
+    const res = await api.get('/admin/logs?target_type=user')
+    logs.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+function getActionLabel(action) {
+  switch(action) {
+    case 'toggle_user_active': return 'Toggle Aktif Akun';
+    case 'create_admin': return 'Tambah Admin';
+    case 'verify_product': return 'Verifikasi Inovasi';
+    case 'update_tahapan': return 'Update Tahapan';
+    default: return action;
+  }
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
 
 const form = ref({
   name: '', username: '', email: '', password: '', level: 'admin'
@@ -312,6 +420,23 @@ async function createAdmin() {
   }
 }
 
+async function toggleAdminActive(admin) {
+  const action = admin.is_active !== false ? 'menonaktifkan' : 'mengaktifkan'
+  if (!confirm(`Apakah Anda yakin ingin ${action} administrator "${admin.name}"?`)) return
+  
+  togglingAdmin.value = admin.id
+  try {
+    const res = await api.put(`/admin/users/${admin.id}/toggle-active`)
+    toastStore.show(res.data.message || `Admin berhasil di${action}.`, 'success')
+    await loadAdmins()
+    await loadLogs()
+  } catch (e) {
+    toastStore.show(e.response?.data?.message || `Gagal ${action} admin.`, 'error')
+  } finally {
+    togglingAdmin.value = null
+  }
+}
+
 function openDeleteModal(admin) {
   deleteTarget.value = admin
   showDeleteModal.value = true
@@ -326,6 +451,7 @@ async function confirmDelete() {
     showDeleteModal.value = false
     deleteTarget.value = null
     await loadAdmins()
+    await loadLogs()
   } catch (e) {
     toastStore.show(e.response?.data?.message || 'Gagal menghapus admin.', 'error')
   } finally {
@@ -333,7 +459,10 @@ async function confirmDelete() {
   }
 }
 
-onMounted(loadAdmins)
+onMounted(async () => {
+  await loadAdmins()
+  await loadLogs()
+})
 </script>
 
 <style scoped>
