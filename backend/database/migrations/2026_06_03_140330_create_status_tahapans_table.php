@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('status_tahapans', function (Blueprint $table) {
+        Schema::create('status_tahapan', function (Blueprint $table) {
             $table->bigIncrements('id_status');
             $table->text('deskripsi');
             $table->timestamps();
@@ -17,6 +17,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('status_tahapans');
+        Schema::dropIfExists('status_tahapan');
     }
 };

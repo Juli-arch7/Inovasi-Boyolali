@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('opds', function (Blueprint $table) {
-            $table->bigIncrements('id_opd');
-            $table->string('nama_opd');
-            $table->text('alamat_opd')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('opds')) {
+            Schema::create('opds', function (Blueprint $table) {
+                $table->id(); // Gunakan id standar Laravel sesuai database yang sudah ada
+                $table->string('nama_opd');
+                $table->text('alamat_opd')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -39,7 +39,7 @@
               </select>
             </div>
 
-            <div class="form-group" v-if="selectedJenisName === 'OPD'">
+            <div class="form-group" v-if="selectedJenisName === 'OPD' || selectedJenisName === 'ASN'">
               <label>Pilih OPD</label>
               <select class="form-control" v-model="form.id_opd" required>
                 <option value="">Pilih OPD</option>
@@ -49,7 +49,7 @@
               </select>
             </div>
 
-            <div class="form-group" v-if="selectedJenisName === 'Pemerintah'">
+            <div class="form-group" v-if="selectedJenisName === 'Pemerintah' || selectedJenisName === 'Kepala Daerah' || selectedJenisName === 'Anggota DPRD' || selectedJenisName === 'DPRD'">
               <label>Instansi Pemerintah</label>
               <select class="form-control" v-model="form.id_pemerintah" required>
                 <option value="">Pilih Instansi Pemerintah</option>
