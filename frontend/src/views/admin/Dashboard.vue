@@ -83,43 +83,55 @@
         </div>
       </div>
 
-      <!-- Data Table Section -->
-      <div class="card table-section">
-        <div class="table-header">
-          <h3 class="section-title">
+      <!-- Data Inovasi Section -->
+      <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="section-title" style="font-size: 1.25rem;">
             <i class='bx bx-table'></i>
             Data Inovasi
-            <span class="badge badge-info" v-if="tableData.total">{{ tableData.total }} data</span>
-          </h3>
-          <div class="table-controls">
-            <div class="search-box">
-              <i class='bx bx-search'></i>
-              <input
-                type="text"
-                v-model="searchQuery"
-                @input="debounceSearch"
-                placeholder="Cari inovasi..."
-                class="search-input"
-              />
-            </div>
-          </div>
+            <span class="badge badge-info" v-if="tableData.total" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px;">{{ tableData.total }} data</span>
+          </h2>
         </div>
+      </div>
 
-        <!-- Table -->
-        <div class="table-wrapper" v-if="!loadingTable">
+      <div class="card mb-4">
+        <div class="search-filter-wrapper">
+          <input
+            v-model="searchQuery"
+            type="text"
+            @input="debounceSearch"
+            placeholder="Cari nama inovasi..."
+            class="form-control search-input"
+          />
+          <select v-model="filterOpd" @change="onFilterChange" class="form-control filter-select">
+            <option value="">Semua OPD</option>
+            <option v-for="opd in opdOptions" :key="opd.id" :value="opd.nama_opd">{{ opd.nama_opd }}</option>
+          </select>
+          <select v-model="filterStatus" @change="onFilterChange" class="form-control filter-select">
+            <option value="">Semua Status</option>
+            <option value="approved">Disetujui</option>
+            <option value="pending">Menunggu</option>
+            <option value="rejected">Ditolak</option>
+            <option value="active">Aktif</option>
+            <option value="inactive">Nonaktif</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-container" v-if="!loadingTable">
           <table v-if="tableData.data && tableData.data.length > 0">
             <thead>
               <tr>
+                <th>No</th>
                 <th class="sortable" @click="toggleSort('nama_inovasi')">
                   Nama Inovasi
                   <i :class="getSortIcon('nama_inovasi')"></i>
                 </th>
                 <th>Inisiator</th>
-                <th>Jenis Inovasi</th>
-                <th class="sortable" @click="toggleSort('tahun_inovasi')">
-                  Tahun
-                  <i :class="getSortIcon('tahun_inovasi')"></i>
-                </th>
+                <th>OPD</th>
+                <th>Bentuk</th>
+                <th>Tahapan</th>
                 <th class="sortable" @click="toggleSort('status_kurasi')">
                   Status
                   <i :class="getSortIcon('status_kurasi')"></i>
@@ -128,30 +140,25 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tableData.data" :key="item.id">
-                <td class="td-name">{{ item.nama_inovasi }}</td>
+              <tr v-for="(item, index) in tableData.data" :key="item.id">
+                <td>{{ (tableData.current_page - 1) * 10 + index + 1 }}</td>
+                <td style="font-weight: 600;">{{ item.nama_inovasi }}</td>
+                <td>{{ item.nama_inisiator }}</td>
+                <td>{{ item.nama_opd || '-' }}</td>
+                <td><span class="badge-custom">{{ item.jenis_inovasi || '-' }}</span></td>
+                <td>{{ item.nama_tahapan || '-' }}</td>
                 <td>
-                  <div class="inisiator-cell">
-                    <span class="inisiator-name">{{ item.nama_inisiator }}</span>
-                    <span class="inisiator-type">{{ item.jenis_inisiator }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge badge-light">{{ item.jenis_inovasi }}</span>
-                </td>
-                <td class="td-year">{{ item.tahun_inovasi }}</td>
-                <td>
-                  <span :class="'badge badge-' + getStatusClass(item.status_kurasi)">
-                    {{ getStatusLabel(item.status_kurasi) }}
+                  <span :class="['status-pill', getStatusClass(item.status_kurasi, item.is_active)]">
+                    {{ getStatusLabel(item.status_kurasi, item.is_active) }}
                   </span>
                 </td>
-                <td>
+                <td class="actions-cell">
                   <router-link
                     :to="'/admin/verifikasi/' + item.id"
-                    class="btn btn-sm btn-action"
-                    title="Lihat Detail"
+                    class="btn btn-outline btn-sm d-inline-flex align-items-center gap-1"
+                    title="Detail"
                   >
-                    <i class='bx bx-show'></i>
+                    <i class='bx bx-show' style="font-size: 1.1rem;"></i> Detail
                   </router-link>
                 </td>
               </tr>
@@ -168,7 +175,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination" v-if="tableData.last_page > 1">
+        <div class="pagination" v-if="tableData.last_page > 1 && !loadingTable">
           <button
             class="btn btn-sm btn-outline"
             :disabled="tableData.current_page <= 1"
@@ -223,6 +230,8 @@ const tableData = ref({ data: [], current_page: 1, last_page: 1, per_page: 10, t
 const selectedYear = ref('')
 const activeFilter = ref('all')
 const searchQuery = ref('')
+const filterOpd = ref('')
+const filterStatus = ref('')
 const sortBy = ref('created_at')
 const sortDir = ref('desc')
 const currentPage = ref(1)
@@ -231,6 +240,8 @@ const loadingStats = ref(true)
 const loadingChart = ref(true)
 const loadingTable = ref(true)
 const errorMsg = ref('')
+
+const opdOptions = ref([])
 
 const chartCanvas = ref(null)
 let chartInstance = null
@@ -298,6 +309,15 @@ async function fetchChart() {
   }
 }
 
+async function loadOpds() {
+  try {
+    const res = await api.get('/public/metadata')
+    opdOptions.value = res.data.opds || []
+  } catch (e) {
+    console.error('Failed to load OPDs:', e)
+  }
+}
+
 async function fetchTable() {
   loadingTable.value = true
   try {
@@ -310,6 +330,8 @@ async function fetchTable() {
     }
     if (selectedYear.value) params.year = selectedYear.value
     if (searchQuery.value) params.search = searchQuery.value
+    if (filterOpd.value) params.opd = filterOpd.value
+    if (filterStatus.value) params.status = filterStatus.value
 
     const res = await api.get('/admin/dashboard/inovasi', { params })
     tableData.value = res.data
@@ -421,6 +443,11 @@ function onYearChange() {
   fetchTable()
 }
 
+function onFilterChange() {
+  currentPage.value = 1
+  fetchTable()
+}
+
 function debounceSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
@@ -451,22 +478,22 @@ function getSortIcon(column) {
   return sortDir.value === 'asc' ? 'bx bx-sort-up sort-icon active' : 'bx bx-sort-down sort-icon active'
 }
 
-function getStatusClass(status) {
-  switch (status) {
-    case 'approved': return 'success'
-    case 'pending': return 'pending'
-    case 'rejected': return 'danger'
-    default: return 'pending'
+function getStatusClass(status, isActive) {
+  if (status === 'approved') {
+    return isActive ? 'status-active' : 'status-inactive'
   }
+  if (status === 'pending') return 'status-pending'
+  if (status === 'rejected') return 'status-rejected'
+  return ''
 }
 
-function getStatusLabel(status) {
-  switch (status) {
-    case 'approved': return 'Disetujui'
-    case 'pending': return 'Menunggu'
-    case 'rejected': return 'Ditolak'
-    default: return status
+function getStatusLabel(status, isActive) {
+  if (status === 'approved') {
+    return isActive ? 'Aktif' : 'Nonaktif'
   }
+  if (status === 'pending') return 'Menunggu'
+  if (status === 'rejected') return 'Ditolak'
+  return status
 }
 
 // ─── Init ───
@@ -474,6 +501,7 @@ onMounted(async () => {
   // First fetch chart to get available years
   await fetchChart()
   fetchStatistics()
+  loadOpds()
   fetchTable()
 })
 </script>
@@ -651,63 +679,63 @@ onMounted(async () => {
 }
 
 /* ─── Table Section ─── */
-.table-section {
-  padding: 1.5rem;
-}
-
-.table-header {
+.search-filter-wrapper {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
   gap: 1rem;
-}
-
-.table-controls {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  background: var(--bg-gray);
-  border-radius: 10px;
-  padding: 0.5rem 0.875rem;
-  gap: 0.5rem;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.search-box:focus-within {
-  border-color: var(--primary);
-  background: var(--bg-white);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.search-box i {
-  color: var(--text-light);
-  font-size: 1.1rem;
+  flex-wrap: wrap;
 }
 
 .search-input {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  color: var(--text-main);
-  width: 200px;
+  flex: 2;
+  min-width: 200px;
 }
 
-.search-input::placeholder {
-  color: var(--text-light);
+.filter-select {
+  flex: 1;
+  min-width: 160px;
+}
+
+.badge-custom {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-active, .status-approved {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-inactive, .status-rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 /* ─── Table ─── */
-.table-wrapper {
+.table-container {
   overflow-x: auto;
   border-radius: 10px;
   border: 1px solid var(--border-color);
@@ -781,33 +809,6 @@ tbody tr:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.inisiator-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.inisiator-name {
-  font-weight: 500;
-  color: var(--text-main);
-  font-size: 0.875rem;
-}
-
-.inisiator-type {
-  font-size: 0.75rem;
-  color: var(--text-light);
-}
-
-/* ─── Badges ─── */
-.badge-light {
-  background: var(--bg-gray);
-  color: var(--text-muted);
-  padding: 0.25rem 0.625rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
 .badge-info {
   background: #dbeafe;
   color: #1d4ed8;
@@ -817,29 +818,6 @@ tbody tr:hover {
   border-radius: 6px;
   font-weight: 600;
   vertical-align: middle;
-}
-
-.badge-success { background: #dcfce7; color: #166534; }
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
-
-/* ─── Action Button ─── */
-.btn-action {
-  background: var(--bg-gray);
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.35rem 0.6rem;
-  font-size: 1.1rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-}
-
-.btn-action:hover {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
 }
 
 /* ─── Pagination ─── */

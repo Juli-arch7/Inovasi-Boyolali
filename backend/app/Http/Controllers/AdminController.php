@@ -361,6 +361,8 @@ class AdminController extends Controller
         $filter = $request->query('filter', 'all'); // all, unit_kerja, masyarakat
         $year = $request->query('year');
         $search = $request->query('search');
+        $opd = $request->query('opd');
+        $status = $request->query('status');
         $perPage = $request->query('per_page', 10);
         $sortBy = $request->query('sort_by', 'created_at');
         $sortDir = $request->query('sort_dir', 'desc');
@@ -368,6 +370,8 @@ class AdminController extends Controller
         $query = ProdukInovasi::with([
             'inisiatorProfile.jenisInisiator',
             'bentukInovasi',
+            'tahapanInovasi',
+            'opd',
         ]);
 
         // Filter tahun
@@ -387,6 +391,28 @@ class AdminController extends Controller
                 $query->whereHas('inisiatorProfile', function ($q) use ($masyarakatJenisId) {
                     $q->where('id_jenis_inisiator', '!=', $masyarakatJenisId);
                 });
+            }
+        }
+
+        // Filter OPD
+        if ($opd) {
+            if (is_numeric($opd)) {
+                $query->where('id_opd', $opd);
+            } else {
+                $query->whereHas('opd', function ($q) use ($opd) {
+                    $q->where('nama_opd', $opd);
+                });
+            }
+        }
+
+        // Filter Status
+        if ($status) {
+            if ($status === 'active') {
+                $query->where('is_active', true)->where('status_kurasi', 'approved');
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false)->where('status_kurasi', 'approved');
+            } elseif (in_array($status, ['pending', 'approved', 'rejected'])) {
+                $query->where('status_kurasi', $status);
             }
         }
 
@@ -421,6 +447,8 @@ class AdminController extends Controller
                 'jenis_inisiator' => $p->inisiatorProfile?->jenisInisiator?->nama_jenis_inisiator ?? '-',
                 'nama_inisiator' => $p->inisiatorProfile?->nama_inisiator ?? '-',
                 'jenis_inovasi' => $p->bentukInovasi?->nama_bentuk ?? '-',
+                'nama_opd' => $p->opd?->nama_opd ?? '-',
+                'nama_tahapan' => $p->tahapanInovasi?->nama_tahapan ?? '-',
                 'tahun_inovasi' => $p->tahun_inovasi,
                 'status_kurasi' => $p->status_kurasi,
                 'is_active' => $p->is_active,
