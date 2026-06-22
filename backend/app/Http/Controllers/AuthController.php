@@ -57,6 +57,11 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        // Fitur 5: Cek apakah akun dinonaktifkan
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Akun Anda telah dinonaktifkan. Hubungi admin untuk informasi lebih lanjut.'], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json(['message' => 'Login successful', 'user' => $user, 'token' => $token], 200);
     }
@@ -67,6 +72,8 @@ class AuthController extends Controller
     }
 
     public function user(Request $request) {
-        return response()->json($request->user());
+        $user = $request->user();
+        $user->load(['adminProfile', 'inisiatorProfile']);
+        return response()->json($user);
     }
 }

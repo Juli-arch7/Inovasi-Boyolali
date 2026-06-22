@@ -26,6 +26,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_active',
     ];
 
     /**
@@ -59,7 +60,7 @@ class User extends Authenticatable
         return $this->hasOne(InisiatorProfile::class);
     }
 
-    public function masyarakatProfile() {
-        return $this->hasOne(MasyarakatProfile::class);
+    public function masyarakat() {
+        return $this->hasOne(Masyarakat::class);
     }
 }

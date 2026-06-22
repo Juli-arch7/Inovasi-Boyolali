@@ -7,6 +7,7 @@ use App\Models\OPD;
 use App\Models\User;
 use App\Models\InisiatorProfile;
 use App\Models\JenisInisiator;
+use App\Models\TahapanInovasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -109,37 +110,170 @@ class AdminController extends Controller
 
         $product->update($updateData);
 
+        // Log action
+        \App\Models\AdminLog::create([
+            'id_admin' => $request->user()->id,
+            'action' => 'verify_product',
+            'target_id' => $product->id,
+            'target_type' => 'product',
+            'description' => ($request->status_kurasi === 'approved' ? 'Menyetujui' : 'Menolak') . ' produk inovasi "' . $product->nama_inovasi . '"' . ($request->status_kurasi === 'rejected' ? ' dengan alasan: ' . $request->alasan_penolakan : ''),
+        ]);
+
         return response()->json(['message' => 'Product status updated', 'product' => $product]);
+    }
+
+    /**
+     * Fitur 1: Update tahapan inovasi — hanya admin yang memverifikasi produk ini
+     */
+    public function updateTahapan(Request $request, $id)
+    {
+        $request->validate([
+            'id_tahapan' => 'required|exists:tahapan_inovasis,id',
+        ]);
+
+        $product = ProdukInovasi::with('tahapanInovasi')->findOrFail($id);
+        $adminProfileId = $request->user()->adminProfile?->id;
+
+        // Hanya admin yang memverifikasi produk ini yang bisa update tahapan
+        if ($product->id_admin !== $adminProfileId) {
+            return response()->json([
+                'message' => 'Hanya admin yang memverifikasi inovasi ini yang dapat mengubah tahapan.'
+            ], 403);
+        }
+
+        // Produk harus sudah disetujui
+        if ($product->status_kurasi !== 'approved') {
+            return response()->json([
+                'message' => 'Tahapan hanya bisa diubah untuk produk yang sudah disetujui.'
+            ], 400);
+        }
+
+        $oldTahapanName = $product->tahapanInovasi?->nama_tahapan;
+
+        $product->update([
+            'id_tahapan' => $request->id_tahapan,
+        ]);
+
+        $product->load('tahapanInovasi');
+        $newTahapanName = $product->tahapanInovasi?->nama_tahapan;
+
+        // Log action
+        \App\Models\AdminLog::create([
+            'id_admin' => $request->user()->id,
+            'action' => 'update_tahapan',
+            'target_id' => $product->id,
+            'target_type' => 'product',
+            'description' => 'Mengubah tahapan produk inovasi "' . $product->nama_inovasi . '" dari "' . ($oldTahapanName ?? '-') . '" menjadi "' . ($newTahapanName ?? '-') . '"',
+        ]);
+
+        return response()->json([
+            'message' => 'Tahapan inovasi berhasil diperbarui.',
+            'product' => $product
+        ]);
     }
 
     public function toggleActive(Request $request, $id)
     {
         $product = ProdukInovasi::findOrFail($id);
         $product->update(['is_active' => !$product->is_active]);
+
+        // Log action
+        \App\Models\AdminLog::create([
+            'id_admin' => $request->user()->id,
+            'action' => 'toggle_product_active',
+            'target_id' => $product->id,
+            'target_type' => 'product',
+            'description' => 'Mengubah status keaktifan produk inovasi "' . $product->nama_inovasi . '" menjadi ' . ($product->is_active ? 'Aktif' : 'Nonaktif'),
+        ]);
+
         $status = $product->is_active ? 'diaktifkan' : 'dinonaktifkan';
         return response()->json(['message' => "Produk berhasil $status", 'product' => $product]);
     }
 
     public function getProductDetail($id)
     {
-        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi'])->findOrFail($id);
+        $product = ProdukInovasi::with([
+            'inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile'
+        ])->findOrFail($id);
         return response()->json($product);
     }
 
     public function getUsers()
     {
-        $users = \App\Models\User::with(['inisiatorProfile', 'adminProfile'])->get();
+        $users = User::with(['inisiatorProfile', 'adminProfile'])->get();
         return response()->json($users);
     }
 
+    /**
+     * Fitur 5: Delete user — Akun tidak boleh dihapus, hanya boleh dinonaktifkan
+     */
     public function deleteUser($id)
     {
-        $user = \App\Models\User::findOrFail($id);
-        if ($user->role === 'superadmin' && \App\Models\User::where('role', 'superadmin')->count() <= 1) {
-            return response()->json(['message' => 'Cannot delete the last superadmin'], 400);
+        return response()->json([
+            'message' => 'Akun pengguna tidak dapat dihapus. Silakan gunakan fitur nonaktifkan akun.'
+        ], 400);
+    }
+
+    /**
+     * Fitur 5: Toggle aktif/nonaktif user — cascade ke produk jika dinonaktifkan
+     */
+    public function toggleUserActive(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Jangan bisa nonaktifkan diri sendiri
+        if ($user->id === $request->user()->id) {
+            return response()->json(['message' => 'Anda tidak bisa menonaktifkan akun Anda sendiri.'], 400);
         }
-        $user->delete();
-        return response()->json(['message' => 'User deleted successfully']);
+
+        // Jangan bisa nonaktifkan superadmin terakhir
+        if ($user->role === 'superadmin' && $user->is_active && User::where('role', 'superadmin')->where('is_active', true)->count() <= 1) {
+            return response()->json(['message' => 'Tidak bisa menonaktifkan superadmin terakhir.'], 400);
+        }
+
+        $newStatus = !$user->is_active;
+        $user->update(['is_active' => $newStatus]);
+
+        // Jika dinonaktifkan dan user adalah inisiator, nonaktifkan semua produknya
+        if (!$newStatus && $user->inisiatorProfile) {
+            ProdukInovasi::where('id_inisiator', $user->inisiatorProfile->id)
+                ->update(['is_active' => false]);
+        }
+
+        $statusText = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
+
+        // Log action
+        \App\Models\AdminLog::create([
+            'id_admin' => $request->user()->id,
+            'action' => 'toggle_user_active',
+            'target_id' => $user->id,
+            'target_type' => 'user',
+            'description' => 'Mengubah status keaktifan pengguna "' . ($user->name ?? $user->username) . '" (' . $user->role . ') menjadi ' . ($newStatus ? 'Aktif' : 'Nonaktif'),
+        ]);
+
+        return response()->json([
+            'message' => "Pengguna berhasil $statusText.",
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Get admin action logs with filtering
+     */
+    public function getLogs(Request $request)
+    {
+        $query = \App\Models\AdminLog::with(['admin.adminProfile']);
+
+        if ($request->has('target_type')) {
+            $query->where('target_type', $request->target_type);
+        }
+
+        if ($request->has('target_id')) {
+            $query->where('target_id', $request->target_id);
+        }
+
+        $logs = $query->latest()->get();
+        return response()->json($logs);
     }
 
     /**

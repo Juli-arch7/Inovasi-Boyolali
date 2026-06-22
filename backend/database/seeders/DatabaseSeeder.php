@@ -8,6 +8,8 @@ use App\Models\Kelurahan;
 use App\Models\TahapanInovasi;
 use App\Models\BentukInovasi;
 use App\Models\JenisInisiator;
+use App\Models\Masyarakat;
+use App\Models\Pemerintah;
 use App\Models\OPD;
 use App\Models\ProdukInovasi;
 use Illuminate\Database\Seeder;
@@ -40,20 +42,52 @@ class DatabaseSeeder extends Seeder
             'Tamansari',
             'Teras',
             'Wonosegoro',
-            'Wonosamudro'
+            'Wonosamodro'
         ];
         foreach ($kecamatanNames as $name) {
             Kecamatan::create(['nama_kecamatan' => $name]);
         }
 
-        // ─── Kelurahan (assign to Kecamatan "Boyolali") ───
-        $boyolali = Kecamatan::where('nama_kecamatan', 'Boyolali')->first();
-        $kelurahanNames = ['Boyolali', 'Siswodipuran', 'Banaran', 'Bayem', 'Pulisen', 'Kalicacing'];
-        foreach ($kelurahanNames as $name) {
-            Kelurahan::create([
-                'nama_kelurahan' => $name,
-                'id_kecamatan' => $boyolali->id,
-            ]);
+         // ─── Kelurahan (Mapping Objek per Kecamatan) ───
+        $kelurahanNames = [
+            'Ampel'     => ['Banyuanyar', 'Candi', 'Gondang Slamet', 'Ngampon', 'Ngargosari', 'Ngenden', 'Selodoko', 'Sidomulyo', 'Tanduk', 'Urutsewu'],
+            'Andong'    => ['Andong', 'Beji', 'Gondang Rawe', 'Kacangan', 'Kadipaten', 'Kedungdowo', 'Kunti', 'Mojo', 'Munggur', 'Pakang', 'Pakel', 'Pelemrejo', 'Pranggong', 'Semawung', 'Sempu', 'Senggrong'],
+            'Banyudono' => ['Bangak', 'Banyudono', 'Batan', 'Bendan', 'Cangkringan', 'Denggungan', 'Dukuh', 'Jembungan', 'Jipangan', 'Ketaon', 'Kuwiran', 'Ngaru-aru', 'Sambon', 'Tanjungsari', 'Trayu'],
+            'Boyolali'  => ['Banaran', 'Karanggeneng', 'Kebonbimo', 'Kiringan', 'Mudal', 'Penggung', 'Pulisen', 'Siswodipuran', 'Winong'],
+            'Cepogo'    => ['Bakulan', 'Cabeankunti', 'Candigatak', 'Cepogo', 'Gedangan', 'Genting', 'Gubug', 'Jelok', 'Jombong', 'Kembangkuning', 'Mliwis', 'Paras', 'Selo', 'Sukabumi', 'Sumbung'],
+            'Gladagsari' => ['Candisari', 'Gladagsari', 'Jlarem', 'Kaligentong', 'Kembang', 'Ngadirojo', 'Ngagrong', 'Ngargoloka', 'Sampetan', 'Seboto'],
+            'Juwangi'   => ['Sambeng', 'Cerme', 'Jerukan', 'Juwangi', 'Kalimati', 'Kayen', 'Krobokan', 'Ngaren', 'Ngleses', 'Pilangrejo'],
+            'Karanggede' => ['Bangkok', 'Bantengan', 'Dologan', 'Grogolan', 'Karangkepoh', 'Kebonan', 'Klari', 'Klumpit', 'Manyaran', 'Mojosari', 'Pengkol', 'Pinggir', 'Sempulur', 'Sendang', 'Sranten', 'Tegalsari'],
+            'Kemusu'    => ['Bawu', 'Genengsari', 'Kedungmulyo', 'Kedungrejo', 'Kemusu', 'Kendel', 'Klewor', 'Sarimulyo', 'Watugede', 'Wonoharjo'],
+            'Klego'     => ['Bade', 'Banyu Urip', 'Blumbang', 'Gondanglegi', 'Jaten', 'Kalangan', 'Karanggatak', 'Karangmojo', 'Klego', 'Sangge', 'Sendangrejo', 'Sumber Agung', 'Tanjung'],
+            'Mojosongo' => ['Kemiri', 'Mojosongo', 'Brajan', 'Butuh', 'Dlingo', 'Jurug', 'Karangnongko', 'Kragilan', 'Madu', 'Manggis', 'Metuk', 'Singosari', 'Tambak'],
+            'Musuk'     => ['Cluntang', 'Kebongulo', 'Kembangsari', 'Musuk', 'Pagerjurang', 'Pusporenggo', 'Ringin Larik', 'Sruni', 'Sukorame', 'Sukorejo'],
+            'Ngemplak'  => ['Dibal', 'Donohudan', 'Gagaksipat', 'Giriroto', 'Kismoyoso', 'Manggung', 'Ngargorejo', 'Ngesrep', 'Pandeyan', 'Sawahan', 'Sobokerto', 'Trayu'],
+            'Nogosari'  => ['Bendo', 'Glonggong', 'Guli', 'Jeron', 'Kenteng', 'Ketitang', 'Keyongan', 'Pojok', 'Potronayan', 'Pulutan', 'Rembun', 'Sembungan', 'Tegalgiri'],
+            'Sambi'     => ['Babadan', 'Canden', 'Catur', 'Cermo', 'Demangan', 'Glintang', 'Jagoan', 'Jatisari', 'Kepoh', 'Ngaglik', 'Nglembu', 'Sambi', 'Senting', 'Tawengan', 'Tempursari', 'Trosobo'],
+            'Sawit'     => ['Bendosari', 'Cepokosawit', 'Gombang', 'Guwokajen', 'Jatirejo', 'Jenengan', 'Karangduren', 'Kateguhan', 'Kemasan', 'Manjung', 'Tegalrejo', 'Tlawong'],
+            'Selo'      => ['Jeruk', 'Jrakah', 'Klakah', 'Lencoh', 'Samiran', 'Selo', 'Senden', 'Suroteleng', 'Tarubatang', 'Tlogolele'],
+            'Simo'      => ['Bendungan', 'Blagung', 'Gunung', 'Kedung Lengkong', 'Pelem', 'Pentur', 'Simo', 'Sumber', 'Talakbroto', 'Temon', 'Teter', 'Walen', 'Wates'],
+            'Tamansari' => ['Dragan', 'Jemowo', 'Karanganyar', 'Karangkendal', 'Keposong', 'Lanjaran', 'Lampar', 'Mriyan', 'Sangup', 'Sumur'],
+            'Teras'     => ['Bangsalan', 'Doplang', 'Gumukrejo', 'Kadireso', 'Kopen', 'Krasak', 'Mojolegi', 'Nepen', 'Randusari', 'Salakan', 'Sudimoro', 'Tawangsari', 'Teras'],
+            'Wonosegoro' => ['Bandung', 'Banyusri', 'Bojong', 'Bolo', 'Gosono', 'Guwo', 'Karangjati', 'Kauman', 'Ketoyan', 'Lemahireng', 'Wonosegoro'],
+            'Wonosamodro' => ['Bengle', 'Bercak', 'Garangan', 'Gilirejo', 'Gunungsari', 'Jatilawang', 'Kalinanas', 'Kedungpilang', 'Ngablak', 'Repaking'],
+            // Tinggal tambah baris baru di sini kalau mau melengkapi kecamatan lain
+        ];
+
+        foreach ($kelurahanNames as $kecamatanName => $daftarKelurahan) {
+            // Cari data kecamatan berdasarkan nama key array di atas
+            $kecamatan = Kecamatan::where('nama_kecamatan', $kecamatanName)->first();
+            
+            // Jika kecamatannya terdaftar, input semua kelurahannya
+            if ($kecamatan) {
+                foreach ($daftarKelurahan as $name) {
+                    Kelurahan::create([
+                        'nama_kelurahan' => $name,
+                        'id_kecamatan' => $kecamatan->id,
+                    ]);
+                }
+            }
         }
 
         // ─── Tahapan Inovasi ───
@@ -63,20 +97,47 @@ class DatabaseSeeder extends Seeder
         }
 
         // ─── Bentuk Inovasi ───
-        $bentukNames = [
-            'Inovasi Pelayanan Publik',
-            'Inovasi Tata Kelola Pemerintahan',
-            'Inovasi Daerah Lainnya'
-        ];
+        $bentukNames = ['Tata Kelola', 'Pelayanan Publik', 'Lainnya'];
         $bentukModels = [];
         foreach ($bentukNames as $name) {
             $bentukModels[$name] = BentukInovasi::create(['nama_bentuk' => $name]);
         }
 
         // ─── Jenis Inisiator ───
-        $jenisNames = ['Kepala Daerah', 'Anggota DPRD', 'OPD', 'ASN', 'Masyarakat'];
+        $jenisNames = ['Masyarakat', 'OPD', 'Pemerintah'];
         foreach ($jenisNames as $name) {
             JenisInisiator::create(['nama_jenis_inisiator' => $name]);
+        }
+
+        // ─── Masyarakat (Dummy) ───
+        $masyarakatData = [
+            ['nama_masyarakat' => 'Pelajar/Mahasiswa'],
+            ['nama_masyarakat' => 'UMKM'],
+            ['nama_masyarakat' => 'Organisasi Kemasyarakatan'],
+            ['nama_masyarakat' => 'Individu'],
+            ['nama_masyarakat' => 'Lainnya'],
+        ];
+        $masyarakatModels = [];
+        foreach ($masyarakatData as $masyarakat) {
+            $masyarakatModels[$masyarakat['nama_masyarakat']] = Masyarakat::create($masyarakat);
+        }
+
+        // ─── Pemerintah (Dummy) ───
+        $pemerintahData = [
+            ['nama_pemerintah' => 'Pemerintah Kabupaten Boyolali'],
+            ['nama_pemerintah' => 'Dewan Perwakilan Rakyat Daerah (DPRD) Boyolali'],
+            ['nama_pemerintah' => 'Pemerintah Kecamatan Boyolali'],
+            ['nama_pemerintah' => 'Pemerintah Desa/Kelurahan Boyolali'],
+            ['nama_pemerintah' => 'Badan Permusyawaratan Desa (BPD) Boyolali'],
+            ['nama_pemerintah' => 'Lembaga Kemasyarakatan Desa (LKD) Boyolali'],
+            ['nama_pemerintah' => 'Polres Boyolali & Kodim 0724/Boyolali'],
+            ['nama_pemerintah' => 'Kantor Kementerian Agama (Kemenag) Boyolali'],
+            ['nama_pemerintah' => 'Kejaksaan Negeri (Kejari) & Pengadilan Negeri (PN) Boyolali'],
+            ['nama_pemerintah' => 'Badan Usaha Milik Daerah (BUMD) Boyolali'],
+        ];
+        $pemerintahModels = [];
+        foreach ($pemerintahData as $pemerintah) {
+            $pemerintahModels[$pemerintah['nama_pemerintah']] = Pemerintah::create($pemerintah);
         }
 
         // ─── OPD (Dummy & Real ones for mockup) ───
@@ -104,7 +165,7 @@ class DatabaseSeeder extends Seeder
         $superAdminProfile = $superAdmin->adminProfile()->create(['nama_admin' => 'Super Admin Utama', 'level' => 'super_admin']);
 
         // ─── Inisiator ───
-        $jenisOPD = JenisInisiator::where('nama_jenis_inisiator', 'OPD')->first();
+        $jenisMasyarakat = JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->first();
         $inisiator = User::create([
             'name' => 'Budi',
             'username' => 'budi_ini',
@@ -114,53 +175,73 @@ class DatabaseSeeder extends Seeder
         ]);
         $inisiatorProfile = $inisiator->inisiatorProfile()->create([
             'nama_inisiator' => 'Budi',
-            'id_jenis_inisiator' => $jenisOPD->id,
+            'id_jenis_inisiator' => $jenisMasyarakat->id,
             'id_kelurahan' => Kelurahan::first()->id // Assign to first Kelurahan (Siswodipuran/Boyolali)
         ]);
 
         // ─── Seed mock approved products for home page ───
         $tahapanPenerapan = TahapanInovasi::where('nama_tahapan', 'Penerapan')->first();
 
+        // Ambil data kelurahan pertama untuk data dummy produk halaman depan
+        $sampleKelurahan = Kelurahan::first();
+
         // Product 1
         ProdukInovasi::create([
             'id_inisiator' => $inisiatorProfile->id,
             'id_opd' => $opdModels['Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu']->id,
-            'id_bentuk' => $bentukModels['Inovasi Pelayanan Publik']->id,
+            'id_bentuk' => $bentukModels['Pelayanan Publik']->id,
             'id_tahapan' => $tahapanPenerapan->id,
             'id_admin' => $superAdminProfile->id,
             'nama_inovasi' => 'Sistem Informasi Manajemen Pelayanan Terpadu Satu Pintu',
             'deskripsi' => 'Sistem integrasi pelayanan perizinan terpadu satu pintu untuk meningkatkan efisiensi dan transparansi pelayanan publik bagi masyarakat Boyolali.',
             'tahun_inovasi' => 2023,
             'status_kurasi' => 'approved',
-            'is_digital' => true
+
+            // TAMBAHKAN 3 BARIS INI:
+            'id_kecamatan' => $sampleKelurahan->id_kecamatan,
+            'id_kelurahan' => $sampleKelurahan->id,
+            'kontak'       => '081234567890',
+
+            'is_digital' => true,
         ]);
 
         // Product 2
         ProdukInovasi::create([
             'id_inisiator' => $inisiatorProfile->id,
             'id_opd' => $opdModels['Dinas Pemberdayaan Masyarakat dan Desa']->id,
-            'id_bentuk' => $bentukModels['Inovasi Daerah Lainnya']->id,
+            'id_bentuk' => $bentukModels['Lainnya']->id,
             'id_tahapan' => $tahapanPenerapan->id,
             'id_admin' => $superAdminProfile->id,
             'nama_inovasi' => 'Program Pemberdayaan Ekonomi Kreatif Desa Mandiri',
             'deskripsi' => 'Pelatihan dan pendampingan UMKM berbasis keunggulan lokal untuk mendorong kemandirian ekonomi desa di wilayah Kabupaten Boyolali.',
             'tahun_inovasi' => 2023,
             'status_kurasi' => 'approved',
-            'is_digital' => false
+
+            // TAMBAHKAN 3 BARIS INI:
+            'id_kecamatan' => $sampleKelurahan->id_kecamatan,
+            'id_kelurahan' => $sampleKelurahan->id,
+            'kontak'       => '081234567891',
+
+            'is_digital' => false,
         ]);
 
         // Product 3
         ProdukInovasi::create([
             'id_inisiator' => $inisiatorProfile->id,
             'id_opd' => $opdModels['Dinas Komunikasi dan Informatika']->id,
-            'id_bentuk' => $bentukModels['Inovasi Tata Kelola Pemerintahan']->id,
+            'id_bentuk' => $bentukModels['Tata Kelola']->id,
             'id_tahapan' => $tahapanPenerapan->id,
             'id_admin' => $superAdminProfile->id,
             'nama_inovasi' => 'Portal Data Terbuka Smart City Integrasi',
             'deskripsi' => 'Platform penyediaan data sektoral yang terbuka, terintegrasi, dan mudah diakses oleh publik guna mendukung transparansi tata kelola daerah.',
             'tahun_inovasi' => 2024,
             'status_kurasi' => 'approved',
-            'is_digital' => true
+
+            // TAMBAHKAN 3 BARIS INI:
+            'id_kecamatan' => $sampleKelurahan->id_kecamatan,
+            'id_kelurahan' => $sampleKelurahan->id,
+            'kontak'       => '081234567892',
+            'is_digital' => true,
         ]);
     }
 }
