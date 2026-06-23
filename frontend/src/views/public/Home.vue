@@ -120,7 +120,7 @@
               <h3 class="card-title">{{ product.nama_inovasi }}</h3>
               <p class="card-description">{{ product.deskripsi || 'Tidak ada deskripsi.' }}</p>
               <div class="card-footer">
-                <span class="opd-name"><i class='bx bx-buildings'></i> {{ product.opd?.nama_opd || '-' }}</span>
+                <span class="opd-name"><i class='bx bx-buildings'></i> {{ product.opd?.nama_opd || 'Umum / Masyarakat' }}</span>
                 <span class="date"><i class='bx bx-calendar'></i> {{ product.tahun_inovasi }}</span>
               </div>
             </div>
@@ -176,31 +176,37 @@ const filteredProducts = computed(() => {
       if (!matchName && !matchDesc && !matchOpd) return false
     }
 
-    // 2. Kategori
+    // 2. Kategori (Amankan dengan Optional Chaining)
     if (filters.value.category) {
-      const bName = p.bentuk_inovasi?.nama_bentuk || ''
+      const bName = p.bentuk_inovasi?.nama_bentuk || p.bentukInovasi?.nama_bentuk || ''
       if (filters.value.category === 'Pelayanan Publik' && !bName.includes('Pelayanan Publik')) return false
       if (filters.value.category === 'Tata Kelola Pemerintahan' && !bName.includes('Tata Kelola')) return false
       if (filters.value.category === 'Inovasi Daerah Lainnya' && (bName.includes('Pelayanan Publik') || bName.includes('Tata Kelola'))) return false
     }
 
-    // 3. Kecamatan
+    // 3. Kecamatan (Amankan dari nilai NULL)
     if (filters.value.kecamatan) {
-      const matchKecName = p.inisiator_profile?.kelurahan?.kecamatan?.nama_kecamatan === filters.value.kecamatan
-      const matchKecId = p.inisiator_profile?.kelurahan?.kecamatan?.id === Number(filters.value.kecamatan)
+      const kecName = p.inisiator_profile?.kelurahan?.kecamatan?.nama_kecamatan || ''
+      const kecId = p.inisiator_profile?.kelurahan?.kecamatan?.id || 0
+      
+      const matchKecName = kecName === filters.value.kecamatan
+      const matchKecId = kecId === Number(filters.value.kecamatan)
       if (!matchKecName && !matchKecId) return false
     }
 
-    // 4. Kelurahan
+    // 4. Kelurahan (Amankan dari nilai NULL)
     if (filters.value.kelurahan) {
-      const matchKelName = p.inisiator_profile?.kelurahan?.nama_kelurahan === filters.value.kelurahan
-      const matchKelId = p.inisiator_profile?.kelurahan?.id === Number(filters.value.kelurahan)
+      const kelName = p.inisiator_profile?.kelurahan?.nama_kelurahan || ''
+      const kelId = p.inisiator_profile?.kelurahan?.id || 0
+      
+      const matchKelName = kelName === filters.value.kelurahan
+      const matchKelId = kelId === Number(filters.value.kelurahan)
       if (!matchKelName && !matchKelId) return false
     }
 
     // 5. Tahun
     if (filters.value.tahun) {
-      if (p.tahun_inovasi !== Number(filters.value.tahun)) return false
+      if (Number(p.tahun_inovasi) !== Number(filters.value.tahun)) return false
     }
 
     // 6. Bentuk (Digital / Non-Digital Checkbox)
