@@ -63,6 +63,7 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        $user->load(['adminProfile', 'inisiatorProfile']);
         return response()->json(['message' => 'Login successful', 'user' => $user, 'token' => $token], 200);
     }
 

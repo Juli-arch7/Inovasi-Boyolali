@@ -40,6 +40,7 @@ class PublicController extends Controller
             'kelurahans' => Kelurahan::all(),
             'bentuk_inovasis' => BentukInovasi::all(),
             'opds' => OPD::all(),
+            'tahapan_inovasis' => \App\Models\TahapanInovasi::all(),
         ]);
     }
 

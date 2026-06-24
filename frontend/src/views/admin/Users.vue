@@ -91,7 +91,8 @@
                 <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Username</th>
                 <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Email</th>
                 <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider text-center">Role</th>
-                <th v-if="isSuperAdmin" class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider text-center w-28">Aksi</th>
+                <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider text-center">Status</th>
+                <th v-if="isSuperAdmin" class="p-4 text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider text-center w-32">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
@@ -135,14 +136,27 @@
                   </span>
                 </td>
 
+                <td class="p-4 text-center">
+                  <span
+                    class="px-2.5 py-1 rounded-lg text-xs font-bold"
+                    :class="user.is_active !== false ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30'"
+                  >
+                    {{ user.is_active !== false ? 'Aktif' : 'Nonaktif' }}
+                  </span>
+                </td>
+
                 <td v-if="isSuperAdmin" class="p-4 text-center">
                   <button
                     v-if="user.id !== currentUserId"
-                    @click="openDeleteModal(user)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                    @click="toggleUserActive(user)"
+                    :disabled="togglingUser === user.id"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                    :class="user.is_active !== false
+                      ? 'border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/40 dark:text-rose-400 dark:bg-rose-950/20 dark:hover:bg-rose-900/30'
+                      : 'border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-900/40 dark:text-emerald-400 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30'"
                   >
-                    <Trash2 class="w-3.5 h-3.5" />
-                    Hapus
+                    <Loader2 v-if="togglingUser === user.id" class="w-3 h-3 animate-spin" />
+                    {{ user.is_active !== false ? 'Nonaktifkan' : 'Aktifkan' }}
                   </button>
                   <span v-else class="text-xs text-slate-400 italic">—</span>
                 </td>
@@ -150,7 +164,7 @@
 
               <!-- Empty state -->
               <tr v-if="filteredUsers.length === 0 && !loading">
-                <td :colspan="isSuperAdmin ? 6 : 5" class="p-16 text-center">
+                <td :colspan="isSuperAdmin ? 7 : 6" class="p-16 text-center">
                   <div class="flex flex-col items-center gap-3">
                     <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       <Users class="w-7 h-7 text-slate-300 dark:text-slate-600" />
@@ -176,105 +190,9 @@
           </div>
         </div>
       </div>
-
-      <!-- User Action Logs Card -->
-      <div class="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
-            <History class="w-5 h-5 text-indigo-500" />
-          </div>
-          <h2 class="text-base font-bold text-slate-800 dark:text-white">Riwayat Aktivitas Pengguna</h2>
-        </div>
-
-        <div v-if="loadingLogs" class="p-8 flex justify-center">
-          <Loader2 class="w-6 h-6 animate-spin text-slate-400" />
-        </div>
-        
-        <div v-else-if="logs.length === 0" class="p-16 text-center">
-          <p class="text-sm font-semibold text-slate-400">Belum ada riwayat aktivitas terkait pengguna.</p>
-        </div>
-        
-        <div v-else class="overflow-x-auto w-full">
-          <table class="w-full border-collapse text-left">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
-              <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
-                <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                  {{ formatDateTime(log.created_at) }}
-                </td>
-                <td class="p-4">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-slate-800 dark:text-white">
-                      {{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}
-                    </span>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
-                      {{ log.admin?.role }}
-                    </span>
-                  </div>
-                </td>
-                <td class="p-4 text-center">
-                  <span class="inline-flex items-center justify-center whitespace-nowrap min-w-max px-3 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-none">
-                    {{ getActionLabel(log.action) }}
-                  </span>
-                </td>
-                <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
-                  {{ log.description }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </main>
 
-    <!-- Delete Confirmation Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showDeleteModal = false">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-          <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200/50 dark:border-slate-800/50 animate-scale-in">
-            <!-- Modal Header -->
-            <div class="p-6 pb-4">
-              <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center mb-4">
-                <AlertTriangle class="w-6 h-6 text-rose-600" />
-              </div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Hapus Pengguna</h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                Apakah Anda yakin ingin menghapus pengguna
-                <span class="font-bold text-slate-800 dark:text-white">"{{ deleteTarget?.name || deleteTarget?.username }}"</span>?
-                Semua data terkait juga akan terhapus secara permanen.
-              </p>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/50 flex gap-3 justify-end">
-              <button
-                @click="showDeleteModal = false"
-                class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                @click="confirmDelete"
-                :disabled="deleting"
-                class="px-4 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
-              >
-                <Loader2 v-if="deleting" class="w-4 h-4 animate-spin" />
-                <Trash2 v-else class="w-4 h-4" />
-                {{ deleting ? 'Menghapus...' : 'Ya, Hapus' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- No delete modal: users can only be deactivated, not deleted -->
   </div>
 </template>
 
@@ -285,22 +203,18 @@ import { useAuthStore } from '../../stores/auth'
 import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
-  Search, Filter, X, Trash2, Users, AlertTriangle,
-  Loader2, Shield, User, Building2, History
+  Search, Filter, X, Users,
+  Loader2, Shield, User, Building2
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const toastStore = useToastStore()
 
 const users = ref([])
+const loading = ref(true)
 const searchQuery = ref('')
 const filterRole = ref('')
-const loading = ref(true)
-const showDeleteModal = ref(false)
-const deleteTarget = ref(null)
-const deleting = ref(false)
-const logs = ref([])
-const loadingLogs = ref(true)
+const togglingUser = ref(null)
 
 const isSuperAdmin = computed(() => auth.userRole === 'superadmin')
 const currentUserId = computed(() => {
@@ -349,27 +263,6 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  })
-}
-
-function getActionLabel(action, description = '') {
-  switch (action) {
-    case 'toggle_user_active':
-    case 'toggle_admin_active':
-      return /nonaktif/i.test(description) ? 'Nonaktif' : /aktif/i.test(description) ? 'Aktif' : 'Toggle Aktif Akun'
-    case 'create_admin': return 'Tambah Admin'
-    case 'verify_product': return 'Verifikasi Inovasi'
-    case 'update_tahapan': return 'Update Tahapan'
-    case 'toggle_product_active': return /nonaktif/i.test(description) ? 'Nonaktif' : /aktif/i.test(description) ? 'Aktif' : 'Toggle Aktif Produk'
-    default: return action
-  }
-}
-
 async function loadUsers() {
   loading.value = true
   try {
@@ -383,17 +276,7 @@ async function loadUsers() {
   }
 }
 
-async function loadLogs() {
-  loadingLogs.value = true
-  try {
-    const res = await api.get('/admin/logs', { params: { target_type: 'user' } })
-    logs.value = res.data || []
-  } catch (e) {
-    console.error('Failed to load user logs', e)
-  } finally {
-    loadingLogs.value = false
-  }
-}
+
 
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
@@ -407,30 +290,25 @@ const filteredUsers = computed(() => {
   })
 })
 
-function openDeleteModal(user) {
-  deleteTarget.value = user
-  showDeleteModal.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleting.value = true
+async function toggleUserActive(user) {
+  const action = user.is_active !== false ? 'menonaktifkan' : 'mengaktifkan'
+  if (!confirm(`Apakah Anda yakin ingin ${action} pengguna "${user.name || user.username}"?`)) return
+  
+  togglingUser.value = user.id
   try {
-    const res = await api.delete(`/admin/users/${deleteTarget.value.id}`)
-    toastStore.show(res.data.message || 'Pengguna berhasil dihapus.', 'success')
-    showDeleteModal.value = false
-    deleteTarget.value = null
+    const res = await api.put(`/admin/users/${user.id}/toggle-active`)
+    toastStore.show(res.data.message || `Pengguna berhasil di${action}.`, 'success')
     await loadUsers()
   } catch (e) {
-    toastStore.show(e.response?.data?.message || 'Gagal menghapus pengguna.', 'error')
+    toastStore.show(e.response?.data?.message || `Gagal ${action} pengguna.`, 'error')
   } finally {
-    deleting.value = false
+    togglingUser.value = null
   }
 }
 
+
 onMounted(() => {
   loadUsers()
-  loadLogs()
 })
 </script>
 

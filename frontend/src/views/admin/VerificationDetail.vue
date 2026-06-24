@@ -88,20 +88,37 @@
               <!-- Image Gallery -->
               <div class="p-6">
                 <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Foto Dokumentasi</h3>
-                <div v-if="productImages.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div
-                    v-for="(img, idx) in productImages"
-                    :key="idx"
-                    class="relative group overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 aspect-video"
-                  >
+                
+                <div v-if="productImages.length > 0" class="space-y-4">
+                  <!-- Main Image -->
+                  <div class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950/60 aspect-video w-full">
                     <img
-                      :src="getImageUrl(img.isi_konten)"
-                      :alt="'Foto produk ' + (idx + 1)"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      :src="mainImage"
+                      alt="Foto Dokumentasi Utama"
+                      class="w-full h-full object-cover transition-all duration-300"
                       @error="handleImgError($event)"
                     />
                   </div>
+
+                  <!-- Thumbnail Gallery -->
+                  <div v-if="productImages.length > 1" class="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                    <button
+                      v-for="(img, idx) in productImages"
+                      :key="idx"
+                      @click="selectedImgIdx = idx"
+                      class="w-24 h-16 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95"
+                      :class="selectedImgIdx === idx ? 'border-primary shadow-md scale-100' : 'border-transparent opacity-60 hover:opacity-100'"
+                    >
+                      <img
+                        :src="getImageUrl(img.isi_konten)"
+                        :alt="'Foto dokumentasi ' + (idx + 1)"
+                        class="w-full h-full object-cover"
+                        @error="$event.target.style.display = 'none'"
+                      />
+                    </button>
+                  </div>
                 </div>
+
                 <div v-else class="flex flex-col items-center justify-center h-32 rounded-xl bg-slate-50 dark:bg-slate-950/40 border-2 border-dashed border-slate-200 dark:border-slate-800 gap-2">
                   <ImageOff class="w-8 h-8 text-slate-300 dark:text-slate-600" />
                   <p class="text-xs font-medium text-slate-400">Tidak ada foto dokumentasi</p>
@@ -179,6 +196,45 @@
               </div>
             </div>
 
+            <!-- Update Tahapan & Status Panel -->
+            <div v-if="canUpdateTahapan" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
+              <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                Update Tahapan & Status
+              </h3>
+              <form @submit.prevent="handleUpdateTahapan" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                    Tahapan Inovasi <span class="text-rose-500">*</span>
+                  </label>
+                  <select v-model="selectedTahapan" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                    <option v-for="tahapan in tahapanList" :key="tahapan.id" :value="tahapan.id">
+                      {{ tahapan.nama_tahapan }}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                    Status Tahapan <span class="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    v-model="statusTahapanText"
+                    rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                    placeholder="Contoh: form anda sedang dicek oleh admin"
+                    required
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  :disabled="updatingTahapan"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-primary hover:bg-blue-700 text-white shadow-sm shadow-primary/20 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Loader2 v-if="updatingTahapan" class="w-4 h-4 animate-spin" />
+                  Perbarui Tahapan
+                </button>
+              </form>
+            </div>
+
             <!-- Info Card -->
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
               <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -203,6 +259,15 @@
                   <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                     <a v-if="product.inisiator_profile?.kontak" :href="'tel:' + product.inisiator_profile.kontak" class="hover:text-primary transition-colors">{{ product.inisiator_profile.kontak }}</a>
                     <span v-else>-</span>
+                  </p>
+                </div>
+                <div v-if="product.admin_profile">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Diverifikasi Oleh</p>
+                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {{ product.admin_profile?.nama_admin || product.admin_profile?.user?.name || '-' }}
+                  </p>
+                  <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    {{ product.admin_profile?.user?.email || '-' }}
                   </p>
                 </div>
                 <div>
@@ -238,57 +303,7 @@
               </div>
             </div>
 
-            <!-- Action Logs Card -->
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
-              <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
-                  <Clock class="w-5 h-5 text-indigo-500" />
-                </div>
-                <h2 class="text-base font-bold text-slate-800 dark:text-white">Riwayat Aktivitas</h2>
-              </div>
 
-              <div v-if="logs.length === 0" class="p-16 text-center">
-                <p class="text-sm font-semibold text-slate-400">Belum ada riwayat aktivitas.</p>
-              </div>
-
-              <div v-else class="overflow-x-auto w-full">
-                <table class="w-full border-collapse text-left">
-                  <thead>
-                    <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
-                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
-                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
-                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
-                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
-                    <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
-                      <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {{ formatDateTime(log.created_at) }}
-                      </td>
-                      <td class="p-4">
-                        <div class="flex items-center gap-2">
-                          <span class="text-sm font-bold text-slate-800 dark:text-white">
-                            {{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}
-                          </span>
-                          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
-                            {{ log.admin?.role }}
-                          </span>
-                        </div>
-                      </td>
-                      <td class="p-4 text-center">
-                        <span class="inline-flex items-center justify-center whitespace-nowrap min-w-max px-3 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-none">
-                          {{ getActionLabel(log.action, log.description) }}
-                        </span>
-                      </td>
-                      <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
-                        {{ log.description }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
 
           </div>
         </div>
@@ -385,6 +400,7 @@ import Sidebar from '../../components/Sidebar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '../../stores/toast'
+import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
 import {
   ArrowLeft, FileCheck, FileX, CheckCircle2, XCircle, X, Clock,
@@ -394,6 +410,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const toastStore = useToastStore()
+const auth = useAuthStore()
 
 const product = ref(null)
 const loading = ref(true)
@@ -401,7 +418,19 @@ const submitting = ref(false)
 const showRejectModal = ref(false)
 const rejectionReason = ref('')
 const rejectionError = ref('')
-const logs = ref([])
+
+const tahapanList = ref([])
+const selectedTahapan = ref(null)
+const statusTahapanText = ref('')
+const updatingTahapan = ref(false)
+
+const canUpdateTahapan = computed(() => {
+  const userRole = auth.user?.role
+  const isAdminOrSuperAdmin = userRole === 'admin' || userRole === 'superadmin'
+  return product.value?.status_kurasi === 'approved' && 
+         isAdminOrSuperAdmin &&
+         product.value?.id_admin === auth.user?.admin_profile?.id
+})
 
 const presetReasons = [
   'Deskripsi kurang lengkap',
@@ -415,8 +444,17 @@ const presetReasons = [
 const productImages = computed(() => {
   if (!product.value?.media_inovasi) return []
   return product.value.media_inovasi.filter(
-    m => m.jenis_media === 'foto' || m.jenis_media === 'image' || m.jenis_media === 'foto_produk'
+    m => m.jenis_media !== 'link'
   )
+})
+
+const selectedImgIdx = ref(0)
+const mainImage = computed(() => {
+  if (productImages.value.length === 0) return ''
+  if (selectedImgIdx.value >= productImages.value.length) {
+    selectedImgIdx.value = 0
+  }
+  return getImageUrl(productImages.value[selectedImgIdx.value]?.isi_konten)
 })
 
 function getImageUrl(path) {
@@ -443,13 +481,7 @@ function formatDateTime(dateStr) {
 }
 
 function getActionLabel(action, description = '') {
-  switch (action) {
-    case 'verify_product': return 'Verifikasi Inovasi'
-    case 'reject_product': return 'Tolak Inovasi'
-    case 'update_tahapan': return 'Update Tahapan'
-    case 'toggle_product_active': return /nonaktif/i.test(description) ? 'Nonaktif' : /aktif/i.test(description) ? 'Aktif' : 'Toggle Aktif Produk'
-    default: return action
-  }
+  return action
 }
 
 function getStatusBadgeClass(status) {
@@ -498,10 +530,8 @@ async function loadProduct() {
   try {
     const res = await api.get(`/admin/products/${route.params.id}`)
     product.value = res.data
-    
-    // Load logs
-    const logRes = await api.get('/admin/logs', { params: { target_type: 'product', target_id: route.params.id } })
-    logs.value = logRes.data || []
+    selectedTahapan.value = product.value.id_tahapan
+    statusTahapanText.value = product.value.status_tahapan || ''
   } catch (e) {
     console.error('Failed to load product', e)
     toastStore.show('Gagal memuat detail inovasi.', 'error')
@@ -551,7 +581,44 @@ async function submitRejection() {
   }
 }
 
-onMounted(loadProduct)
+const loadMetadata = async () => {
+  try {
+    const res = await api.get('/public/metadata')
+    tahapanList.value = res.data.tahapan_inovasis || []
+  } catch (e) {
+    console.error('Failed to load metadata', e)
+  }
+}
+
+const handleUpdateTahapan = async () => {
+  if (!selectedTahapan.value) {
+    toastStore.show('Pilih tahapan terlebih dahulu.', 'warning')
+    return
+  }
+  if (!statusTahapanText.value.trim()) {
+    toastStore.show('Status tahapan wajib diisi.', 'warning')
+    return
+  }
+  
+  updatingTahapan.value = true
+  try {
+    const res = await api.put(`/admin/products/${route.params.id}/update-tahapan`, {
+      id_tahapan: selectedTahapan.value,
+      status_tahapan: statusTahapanText.value.trim()
+    })
+    toastStore.show('Tahapan inovasi berhasil diperbarui!', 'success')
+    product.value = res.data.product
+  } catch (e) {
+    toastStore.show(e.response?.data?.message || 'Gagal memperbarui tahapan.', 'error')
+  } finally {
+    updatingTahapan.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadProduct()
+  await loadMetadata()
+})
 </script>
 
 <style scoped>

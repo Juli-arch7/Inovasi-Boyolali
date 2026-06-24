@@ -23,7 +23,8 @@ class SuperAdminController extends Controller
             'username' => 'required|string|unique:users',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:6',
-            'level' => 'required|in:super_admin,admin'
+            'level' => 'required|in:super_admin,admin',
+            'kontak' => 'required|string|max:20'
         ]);
 
         $user = User::create([
@@ -36,7 +37,8 @@ class SuperAdminController extends Controller
 
         $user->adminProfile()->create([
             'nama_admin' => $data['name'],
-            'level' => $data['level']
+            'level' => $data['level'],
+            'kontak' => $data['kontak']
         ]);
 
         // Log action

@@ -112,6 +112,14 @@
                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ product.tahapan_inovasi?.nama_tahapan || 'Inisiasi' }}</span>
               </div>
 
+              <!-- Status Tahapan (Khusus untuk Inisiator) -->
+              <div v-if="isInisiatorRoute && product.status_tahapan" class="flex flex-col py-2 border-b border-slate-50 dark:border-slate-800/40 gap-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Status Tahapan</span>
+                <span class="text-sm font-semibold text-primary dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 px-3 py-2 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                  {{ product.status_tahapan }}
+                </span>
+              </div>
+
               <!-- Inisiator -->
               <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Inisiator</span>
@@ -376,7 +384,8 @@ async function handleDownloadFallback() {
 
 onMounted(async () => {
   try {
-    const res = await api.get(`/public/products/${route.params.id}`)
+    const endpoint = isInisiatorRoute.value ? `/inisiator/products/${route.params.id}` : `/public/products/${route.params.id}`
+    const res = await api.get(endpoint)
     product.value = res.data
     
     // Set counters

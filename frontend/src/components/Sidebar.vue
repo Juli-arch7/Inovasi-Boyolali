@@ -48,7 +48,8 @@ import {
   UserCheck,
   Lightbulb,
   PlusCircle,
-  LogOut
+  LogOut,
+  History
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -77,12 +78,14 @@ const menuItems = computed(() => {
       { path: '/admin/users', label: 'Pengguna', icon: Users },
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: ShieldCheck },
       { path: '/admin/products', label: 'Produk Inovasi', icon: Package },
+      { path: '/admin/logs', label: 'Log Aktivitas', icon: History },
     ]
   } else if (auth.userRole === 'admin') {
     return [
       { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: ShieldCheck },
       { path: '/admin/products', label: 'Produk Inovasi', icon: Package },
+      { path: '/admin/logs', label: 'Log Aktivitas', icon: History },
     ]
   }
   return []

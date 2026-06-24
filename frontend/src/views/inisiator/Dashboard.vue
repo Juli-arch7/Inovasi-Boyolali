@@ -144,9 +144,13 @@
                       <h3 class="text-base font-bold text-slate-800 dark:text-white leading-snug group-hover:text-primary transition-colors">
                         {{ product.nama_inovasi }}
                       </h3>
-                      <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                      <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium flex items-center gap-1.5 flex-wrap">
                         Tahun {{ product.tahun_inovasi }}
-                        <span v-if="product.is_digital" class="ml-1.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">Digital</span>
+                        <span v-if="product.is_digital" class="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">Digital</span>
+                        <span class="text-slate-350">|</span>
+                        <span>Tahapan: <strong class="text-slate-600 dark:text-slate-300 font-bold">{{ product.tahapan_inovasi?.nama_tahapan || 'Inisiasi' }}</strong></span>
+                        <span v-if="product.status_tahapan" class="text-slate-350">|</span>
+                        <span v-if="product.status_tahapan">Status: <span class="text-primary dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/30 text-[10px]">{{ product.status_tahapan }}</span></span>
                       </p>
                     </div>
                     <span

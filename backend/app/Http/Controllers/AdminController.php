@@ -155,6 +155,7 @@ class AdminController extends Controller
     {
         $request->validate([
             'id_tahapan' => 'required|exists:tahapan_inovasis,id',
+            'status_tahapan' => 'required|string|max:255',
         ]);
 
         $product = ProdukInovasi::with('tahapanInovasi')->findOrFail($id);
@@ -178,6 +179,7 @@ class AdminController extends Controller
 
         $product->update([
             'id_tahapan' => $request->id_tahapan,
+            'status_tahapan' => $request->status_tahapan,
         ]);
 
         $product->load('tahapanInovasi');
@@ -189,7 +191,7 @@ class AdminController extends Controller
             'action' => 'update_tahapan',
             'target_id' => $product->id,
             'target_type' => 'product',
-            'description' => 'Mengubah tahapan produk inovasi "' . $product->nama_inovasi . '" dari "' . ($oldTahapanName ?? '-') . '" menjadi "' . ($newTahapanName ?? '-') . '"',
+            'description' => 'Mengubah tahapan produk inovasi "' . $product->nama_inovasi . '" dari "' . ($oldTahapanName ?? '-') . '" menjadi "' . ($newTahapanName ?? '-') . '" dengan status: "' . $request->status_tahapan . '"',
         ]);
 
         return response()->json([
@@ -218,7 +220,7 @@ class AdminController extends Controller
 
     public function getProductDetail($id)
     {
-        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi'])->findOrFail($id);
+        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile.user'])->findOrFail($id);
         return response()->json($product);
     }
 
@@ -288,7 +290,13 @@ class AdminController extends Controller
     {
         $query = \App\Models\AdminLog::with(['admin.adminProfile']);
 
-        if ($request->has('target_type')) {
+        // Admin hanya bisa melihat log produk inovasi, superadmin bisa lihat semua
+        $userRole = $request->user()->role;
+        if ($userRole !== 'superadmin') {
+            $query->where('target_type', 'product');
+        }
+
+        if ($request->has('target_type') && $request->target_type !== '') {
             $query->where('target_type', $request->target_type);
         }
 

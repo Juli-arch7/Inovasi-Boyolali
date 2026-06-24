@@ -206,7 +206,6 @@ class InisiatorController extends Controller
             'id_bentuk' => $request->input('id_bentuk'),
             'is_digital' => filter_var($request->input('is_digital', $product->is_digital), FILTER_VALIDATE_BOOLEAN),
             
-            'id_tahapan' => $request->input('id_tahapan'),
             'id_opd' => $request->input('id_opd'),
             'id_masyarakat' => $request->input('id_masyarakat'),
             'id_pemerintah' => $request->input('id_pemerintah'),

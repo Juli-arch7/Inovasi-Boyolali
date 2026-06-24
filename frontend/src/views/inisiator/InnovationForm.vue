@@ -133,15 +133,7 @@
               <input type="text" v-model="form.nama_inovasi" placeholder="Nama inovasi Anda" required class="field-input" />
             </div>
 
-            <div class="form-field">
-              <label class="field-label">Tahapan Inovasi <span class="text-rose-500">*</span></label>
-              <select v-model="form.id_tahapan" required :disabled="isEdit" class="field-input disabled:opacity-60 disabled:cursor-not-allowed">
-                <option value="">Pilih Tahapan</option>
-                <option v-for="tahap in tahapanOptions" :key="tahap.id" :value="tahap.id">
-                  {{ tahap.nama_tahapan }}
-                </option>
-              </select>
-            </div>
+
 
             <div class="form-field">
               <label class="field-label">Bentuk Inovasi <span class="text-rose-500">*</span></label>
@@ -342,7 +334,6 @@ const isError = ref(false)
 
 const opdOptions = ref([])
 const bentukOptions = ref([])
-const tahapanOptions = ref([])
 const jenisInisiatorOptions = ref([])
 const kecamatanOptions = ref([])
 const allKelurahans = ref([])
@@ -546,7 +537,6 @@ onMounted(async () => {
     const resMeta = await api.get('/inisiator/metadata')
     opdOptions.value = resMeta.data.opds || []
     bentukOptions.value = resMeta.data.bentuk_inovasis || []
-    tahapanOptions.value = resMeta.data.tahapan_inovasis || []
     jenisInisiatorOptions.value = resMeta.data.jenis_inisiators || []
     kecamatanOptions.value = resMeta.data.kecamatans || []
     allKelurahans.value = resMeta.data.kelurahan || resMeta.data.kelurahans || []

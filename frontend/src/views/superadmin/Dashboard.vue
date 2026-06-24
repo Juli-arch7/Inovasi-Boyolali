@@ -69,6 +69,10 @@
                   <option value="super_admin">Super Admin</option>
                 </select>
               </div>
+              <div class="form-field">
+                <label class="field-label">No. HP / WhatsApp <span class="text-rose-500">*</span></label>
+                <input class="field-input" v-model="form.kontak" placeholder="08xxxxxxxxxx" required />
+              </div>
             </div>
             <div class="mt-6 flex justify-end">
               <button
@@ -116,6 +120,7 @@
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider min-w-[200px]">Administrator</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Username</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Email</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Kontak (No. HP)</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Role</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Status</th>
                 <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center w-36">Aksi</th>
@@ -154,6 +159,8 @@
 
                 <td class="p-4 text-sm font-medium text-slate-600 dark:text-slate-400">{{ admin.email }}</td>
 
+                <td class="p-4 text-sm font-medium text-slate-600 dark:text-slate-400">{{ admin.admin_profile?.kontak || '-' }}</td>
+
                 <td class="p-4 text-center">
                   <span
                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold"
@@ -184,14 +191,8 @@
                       class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer opacity-0 group-hover:opacity-100 disabled:opacity-50"
                       :class="admin.is_active !== false ? 'border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/40 dark:text-rose-400 dark:bg-rose-950/20 dark:hover:bg-rose-900/30' : 'border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-900/40 dark:text-emerald-400 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30'"
                     >
+                      <Loader2 v-if="togglingAdmin === admin.id" class="w-3 h-3 animate-spin mr-1" />
                       {{ admin.is_active !== false ? 'Nonaktifkan' : 'Aktifkan' }}
-                    </button>
-                    <button
-                      v-if="admin.id !== currentUserId"
-                      @click="openDeleteModal(admin)"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 class="w-3.5 h-3.5" />
                     </button>
                     <span v-else class="text-xs text-slate-400 italic">—</span>
                   </div>
@@ -222,98 +223,9 @@
         </div>
       </div>
 
-      <!-- Admin Action Logs Card -->
-      <div class="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
-            <History class="w-5 h-5 text-indigo-500" />
-          </div>
-          <h2 class="text-base font-bold text-slate-800 dark:text-white">Log Aksi Sistem</h2>
-        </div>
-
-        <div v-if="loadingLogs" class="p-8 flex justify-center">
-          <Loader2 class="w-6 h-6 animate-spin text-slate-400" />
-        </div>
-        
-        <div v-else-if="logs.length === 0" class="p-16 text-center">
-          <p class="text-sm font-semibold text-slate-400">Belum ada log aktivitas.</p>
-        </div>
-        
-        <div v-else class="overflow-x-auto w-full">
-          <table class="w-full border-collapse text-left">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
-                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
-              <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
-                <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                  {{ formatDateTime(log.created_at) }}
-                </td>
-                <td class="p-4">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-slate-800 dark:text-white">{{ log.admin?.name || 'Unknown' }}</span>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
-                      {{ log.admin?.role }}
-                    </span>
-                  </div>
-                </td>
-                <td class="p-4 text-center">
-                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                    {{ getActionLabel(log.action) }}
-                  </span>
-                </td>
-                <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
-                  {{ log.description }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </main>
 
-    <!-- Delete Confirmation Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showDeleteModal = false">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-          <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200/50 dark:border-slate-800/50 animate-scale-in">
-            <div class="p-6 pb-4">
-              <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center mb-4">
-                <AlertTriangle class="w-6 h-6 text-rose-600" />
-              </div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Hapus Administrator</h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                Apakah Anda yakin ingin menghapus
-                <span class="font-bold text-slate-800 dark:text-white">"{{ deleteTarget?.name || deleteTarget?.username }}"</span>?
-                Tindakan ini tidak dapat dibatalkan.
-              </p>
-            </div>
-            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/50 flex gap-3 justify-end">
-              <button
-                @click="showDeleteModal = false"
-                class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
-              >Batal</button>
-              <button
-                @click="confirmDelete"
-                :disabled="deleting"
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-              >
-                <Loader2 v-if="deleting" class="w-4 h-4 animate-spin" />
-                <Trash2 v-else class="w-4 h-4" />
-                {{ deleting ? 'Menghapus...' : 'Ya, Hapus' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- No delete modal needed - admins can only be deactivated -->
   </div>
 </template>
 
@@ -323,8 +235,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
-  UserPlus, X, Save, Trash2, UserX, Shield, Crown,
-  AlertTriangle, AlertCircle, CheckCircle2, Loader2, History
+  UserPlus, X, Save, UserX, Shield, Crown,
+  AlertCircle, CheckCircle2, Loader2
 } from 'lucide-vue-next'
 
 const toastStore = useToastStore()
@@ -335,46 +247,10 @@ const showAddForm = ref(false)
 const submitting = ref(false)
 const formMsg = ref('')
 const formError = ref(false)
-const showDeleteModal = ref(false)
-const deleteTarget = ref(null)
-const deleting = ref(false)
 const togglingAdmin = ref(null)
 
-const logs = ref([])
-const loadingLogs = ref(false)
-
-async function loadLogs() {
-  loadingLogs.value = true
-  try {
-    const res = await api.get('/admin/logs?target_type=user')
-    logs.value = res.data
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loadingLogs.value = false
-  }
-}
-
-function getActionLabel(action) {
-  switch(action) {
-    case 'toggle_user_active': return 'Toggle Aktif Akun';
-    case 'create_admin': return 'Tambah Admin';
-    case 'verify_product': return 'Verifikasi Inovasi';
-    case 'update_tahapan': return 'Update Tahapan';
-    default: return action;
-  }
-}
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  })
-}
-
 const form = ref({
-  name: '', username: '', email: '', password: '', level: 'admin'
+  name: '', username: '', email: '', password: '', level: 'admin', kontak: ''
 })
 
 const currentUserId = computed(() => {
@@ -409,7 +285,7 @@ async function createAdmin() {
     await api.post('/superadmin/admins', form.value)
     formMsg.value = 'Admin berhasil ditambahkan!'
     formError.value = false
-    form.value = { name: '', username: '', email: '', password: '', level: 'admin' }
+    form.value = { name: '', username: '', email: '', password: '', level: 'admin', kontak: '' }
     await loadAdmins()
     setTimeout(() => { showAddForm.value = false; formMsg.value = '' }, 1500)
   } catch (e) {
@@ -429,7 +305,6 @@ async function toggleAdminActive(admin) {
     const res = await api.put(`/admin/users/${admin.id}/toggle-active`)
     toastStore.show(res.data.message || `Admin berhasil di${action}.`, 'success')
     await loadAdmins()
-    await loadLogs()
   } catch (e) {
     toastStore.show(e.response?.data?.message || `Gagal ${action} admin.`, 'error')
   } finally {
@@ -437,31 +312,10 @@ async function toggleAdminActive(admin) {
   }
 }
 
-function openDeleteModal(admin) {
-  deleteTarget.value = admin
-  showDeleteModal.value = true
-}
 
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleting.value = true
-  try {
-    const res = await api.delete(`/superadmin/admins/${deleteTarget.value.id}`)
-    toastStore.show(res.data.message || 'Admin berhasil dihapus.', 'success')
-    showDeleteModal.value = false
-    deleteTarget.value = null
-    await loadAdmins()
-    await loadLogs()
-  } catch (e) {
-    toastStore.show(e.response?.data?.message || 'Gagal menghapus admin.', 'error')
-  } finally {
-    deleting.value = false
-  }
-}
 
 onMounted(async () => {
   await loadAdmins()
-  await loadLogs()
 })
 </script>
 
