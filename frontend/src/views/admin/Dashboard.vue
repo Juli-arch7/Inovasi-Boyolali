@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950/40 transition-colors duration-300">
     <Sidebar />
     
-    <main class="flex-1 p-6 sm:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+    <main class="flex-1 p-6 sm:p-8 pt-10 sm:pt-12 overflow-visible max-w-7xl mx-auto w-full">
       <!-- Sticky Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 mb-8 border-b border-slate-200/50 dark:border-slate-800/50 sticky top-16 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md z-20">
         <div>
@@ -24,7 +24,7 @@
       </div>
 
       <!-- Statistics Widgets (8 Grid) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-10 sm:mt-12 mb-8">
         
         <!-- Total Inovasi -->
         <div class="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group">
