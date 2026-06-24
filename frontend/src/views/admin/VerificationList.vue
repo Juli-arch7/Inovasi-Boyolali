@@ -172,6 +172,62 @@
           </p>
         </div>
       </div>
+
+      <!-- Verification Action Logs -->
+      <div class="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+            <Clock class="w-5 h-5 text-indigo-500" />
+          </div>
+          <h2 class="text-base font-bold text-slate-800 dark:text-white">Riwayat Aktivitas Verifikasi Inovasi</h2>
+        </div>
+
+        <div v-if="loadingLogs" class="p-8 flex justify-center">
+          <Loader2 class="w-6 h-6 animate-spin text-slate-400" />
+        </div>
+
+        <div v-else-if="logs.length === 0" class="p-16 text-center">
+          <p class="text-sm font-semibold text-slate-400">Belum ada riwayat aktivitas terkait verifikasi inovasi.</p>
+        </div>
+
+        <div v-else class="overflow-x-auto w-full">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
+                <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
+              <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
+                <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  {{ formatDateTime(log.created_at) }}
+                </td>
+                <td class="p-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white">
+                      {{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      {{ log.admin?.role }}
+                    </span>
+                  </div>
+                </td>
+                <td class="p-4 text-center">
+                  <span class="inline-flex items-center justify-center whitespace-nowrap min-w-max px-3 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-none">
+                    {{ getActionLabel(log.action, log.description) }}
+                  </span>
+                </td>
+                <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
+                  {{ log.description }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -184,7 +240,7 @@ import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
   Search, Eye, FileCheck, ClipboardCheck,
-  Clock, CheckCircle2, XCircle
+  Clock, CheckCircle2, XCircle, User
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -194,6 +250,8 @@ const products = ref([])
 const searchQuery = ref('')
 const filterStatus = ref('')
 const loading = ref(true)
+const logs = ref([])
+const loadingLogs = ref(true)
 
 const statusFilters = [
   { value: 'pending', label: 'Pending', icon: Clock, activeClass: 'bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/20' },
@@ -274,9 +332,47 @@ async function loadProducts() {
   }
 }
 
+async function loadLogs() {
+  loadingLogs.value = true
+  try {
+    const res = await api.get('/admin/logs', { params: { target_type: 'product' } })
+    logs.value = res.data || []
+  } catch (e) {
+    console.error('Failed to load verification logs', e)
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function getActionLabel(action, description = '') {
+  switch (action) {
+    case 'verify_product': return 'Verifikasi Inovasi'
+    case 'reject_product': return 'Tolak Inovasi'
+    case 'update_tahapan': return 'Update Tahapan'
+    case 'toggle_product_active': return /nonaktif/i.test(description) ? 'Nonaktif' : /aktif/i.test(description) ? 'Aktif' : 'Toggle Aktif Produk'
+    default: return action
+  }
+}
+
 function goToDetail(id) {
   router.push(`/admin/verifikasi/${id}`)
 }
 
-onMounted(loadProducts)
+onMounted(() => {
+  loadProducts()
+  loadLogs()
+})
 </script>
