@@ -149,7 +149,6 @@ class DatabaseSeeder extends Seeder
             ['nama_opd' => 'Dinas Pendidikan dan Kebudayaan', 'alamat_opd' => 'Jl. Boyolali - Solo Km 2, Boyolali'],
             ['nama_opd' => 'Badan Perencanaan Pembangunan Daerah', 'alamat_opd' => 'Jl. Perintis Kemerdekaan No. 12, Boyolali'],
         ];
-        $opdModels = [];
         foreach ($opdData as $opd) {
             $opdModels[$opd['nama_opd']] = OPD::create($opd);
         }
@@ -162,7 +161,11 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'superadmin'
         ]);
-        $superAdminProfile = $superAdmin->adminProfile()->create(['nama_admin' => 'Super Admin Utama', 'level' => 'super_admin']);
+        $superAdminProfile = $superAdmin->adminProfile()->create([
+            'nama_admin' => 'Super Admin Utama',
+            'level' => 'super_admin',
+            'kontak' => '081234567899'
+        ]);
 
         // ─── Inisiator ───
         $jenisMasyarakat = JenisInisiator::where('nama_jenis_inisiator', 'Masyarakat')->first();
@@ -201,6 +204,7 @@ class DatabaseSeeder extends Seeder
             'id_kecamatan' => $sampleKelurahan->id_kecamatan,
             'id_kelurahan' => $sampleKelurahan->id,
             'kontak'       => '081234567890',
+            'status_tahapan' => 'Inovasi telah diterapkan sepenuhnya',
 
             'is_digital' => true,
         ]);
@@ -221,6 +225,7 @@ class DatabaseSeeder extends Seeder
             'id_kecamatan' => $sampleKelurahan->id_kecamatan,
             'id_kelurahan' => $sampleKelurahan->id,
             'kontak'       => '081234567891',
+            'status_tahapan' => 'Dalam proses pendampingan berkala',
 
             'is_digital' => false,
         ]);
@@ -241,6 +246,7 @@ class DatabaseSeeder extends Seeder
             'id_kecamatan' => $sampleKelurahan->id_kecamatan,
             'id_kelurahan' => $sampleKelurahan->id,
             'kontak'       => '081234567892',
+            'status_tahapan' => 'Portal online dapat diakses masyarakat',
             'is_digital' => true,
         ]);
     }

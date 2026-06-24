@@ -16,6 +16,7 @@ import VerificationList from '../views/admin/VerificationList.vue'
 import VerificationDetail from '../views/admin/VerificationDetail.vue'
 import AdminProducts from '../views/admin/Products.vue'
 import AdminUsers from '../views/admin/Users.vue'
+import AdminLogs from '../views/admin/Logs.vue'
 import InisiatorDashboard from '../views/inisiator/Dashboard.vue'
 import InnovationForm from '../views/inisiator/InnovationForm.vue'
 
@@ -60,6 +61,12 @@ const routes = [
     name: 'AdminUsers',
     component: AdminUsers,
     meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/logs',
+    name: 'AdminLogs',
+    component: AdminLogs,
+    meta: { requiresAuth: true, role: 'admin', title: 'Log Aktivitas' }
   },
   {
     path: '/inisiator',

@@ -51,5 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // 🎯 TARUH DI PALING BAWAH: Semua rute yang menangkap parameter {id} dinamis
     Route::get('/inisiator/products/{id}', [InisiatorController::class, 'getProductDetail']);
     Route::put('/inisiator/products/{id}', [InisiatorController::class, 'updateProduct']);
+    // Support multipart/form-data PUT via method spoofing (_method=PUT)
+    Route::post('/inisiator/products/{id}', [InisiatorController::class, 'updateProduct']);
     Route::put('/inisiator/products/{id}/resubmit', [InisiatorController::class, 'resubmitProduct']);
 });
