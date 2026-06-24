@@ -64,13 +64,33 @@
               <input type="text" v-model="form.kontak" placeholder="Email atau Nomor HP" required class="field-input" />
             </div>
 
-            <!-- OPD: hanya tampil jika BUKAN masyarakat -->
-            <div v-if="!isMasyarakat" class="form-field">
+            <!-- Dynamic dropdowns based on jenis inisiator -->
+            <div v-if="isOPD" class="form-field">
               <label class="field-label">OPD <span class="text-rose-500">*</span></label>
-              <select v-model="form.id_opd" :required="!isMasyarakat" class="field-input">
+              <select v-model="form.id_opd" required class="field-input">
                 <option value="">Pilih OPD</option>
                 <option v-for="opd in opdOptions" :key="opd.id_opd ?? opd.id" :value="opd.id_opd ?? opd.id">
                   {{ opd.nama_opd }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="isMasyarakat" class="form-field">
+              <label class="field-label">Masyarakat <span class="text-rose-500">*</span></label>
+              <select v-model="form.id_masyarakat" required class="field-input">
+                <option value="">Pilih Masyarakat</option>
+                <option v-for="masyarakat in masyarakatOptions" :key="masyarakat.id_masyarakat ?? masyarakat.id" :value="masyarakat.id_masyarakat ?? masyarakat.id">
+                  {{ masyarakat.nama_masyarakat }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="isPemerintah" class="form-field">
+              <label class="field-label">Instansi Pemerintah <span class="text-rose-500">*</span></label>
+              <select v-model="form.id_pemerintah" required class="field-input">
+                <option value="">Pilih Instansi Pemerintah</option>
+                <option v-for="pemerintah in pemerintahOptions" :key="pemerintah.id_pemerintah ?? pemerintah.id" :value="pemerintah.id_pemerintah ?? pemerintah.id">
+                  {{ pemerintah.nama_pemerintah }}
                 </option>
               </select>
             </div>
@@ -115,7 +135,7 @@
 
             <div class="form-field">
               <label class="field-label">Tahapan Inovasi <span class="text-rose-500">*</span></label>
-              <select v-model="form.id_tahapan" required class="field-input">
+              <select v-model="form.id_tahapan" required :disabled="isEdit" class="field-input disabled:opacity-60 disabled:cursor-not-allowed">
                 <option value="">Pilih Tahapan</option>
                 <option v-for="tahap in tahapanOptions" :key="tahap.id" :value="tahap.id">
                   {{ tahap.nama_tahapan }}
@@ -194,7 +214,7 @@
               </div>
               <h2 class="text-base font-bold text-slate-800 dark:text-white">Media Dokumentasi</h2>
             </div>
-            <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400">Opsional</span>
+            <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/30 text-rose-500">Wajib (1 - 10 File)</span>
           </div>
           <div class="p-6">
 
@@ -209,37 +229,59 @@
               @drop.prevent="onDrop"
               @click="triggerFileSelect"
             >
-              <input type="file" ref="fileInput" @change="onFileChange" accept=".jpg,.jpeg,.png,.pdf" style="display: none" />
+              <input type="file" ref="fileInput" @change="onFileChange" accept=".jpg,.jpeg,.png,.pdf" multiple style="display: none" />
               <div class="flex flex-col items-center gap-3">
                 <div class="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center">
                   <Upload class="w-7 h-7 text-primary" />
                 </div>
                 <div>
                   <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Klik untuk unggah atau seret file</p>
-                  <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF — Maks. 10MB</p>
+                  <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF — Maks. 10MB per File (1 - 10 File)</p>
                 </div>
               </div>
             </div>
 
-            <!-- File Preview -->
-            <div v-if="selectedFile || existingFile" class="mt-4 flex items-center justify-between bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <FileText class="w-5 h-5 text-primary" />
+            <!-- File Previews -->
+            <div v-if="selectedFiles.length > 0 || existingFiles.length > 0" class="mt-4 space-y-2">
+              
+              <!-- Existing files -->
+              <div v-for="(fileUrl, idx) in existingFiles" :key="'exist-' + idx" class="flex items-center justify-between bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <FileText class="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[200px] sm:max-w-md">
+                      {{ fileUrl.split('/').pop() }}
+                    </p>
+                    <a :href="fileUrl" target="_blank" class="text-xs text-primary hover:underline font-semibold">
+                      Lihat file saat ini
+                    </a>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {{ selectedFile ? selectedFile.name : 'Dokumen Terunggah' }}
-                  </p>
-                  <p v-if="selectedFile" class="text-xs text-slate-400 mt-0.5">{{ formatFileSize(selectedFile.size) }}</p>
-                  <a v-else-if="existingFile" :href="existingFile" target="_blank" class="text-xs text-primary hover:underline font-semibold">
-                    Lihat file saat ini
-                  </a>
-                </div>
+                <button type="button" @click="removeExistingFile(idx)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30 transition-all cursor-pointer">
+                  <X class="w-4 h-4" />
+                </button>
               </div>
-              <button type="button" @click="clearFile" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30 transition-all cursor-pointer">
-                <X class="w-4 h-4" />
-              </button>
+
+              <!-- New Selected files -->
+              <div v-for="(file, idx) in selectedFiles" :key="'new-' + idx" class="flex items-center justify-between bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <FileText class="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[200px] sm:max-w-md">
+                      {{ file.name }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ formatFileSize(file.size) }}</p>
+                  </div>
+                </div>
+                <button type="button" @click="removeSelectedFile(idx)" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30 transition-all cursor-pointer">
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
             </div>
 
           </div>
@@ -304,10 +346,12 @@ const tahapanOptions = ref([])
 const jenisInisiatorOptions = ref([])
 const kecamatanOptions = ref([])
 const allKelurahans = ref([])
+const masyarakatOptions = ref([])
+const pemerintahOptions = ref([])
 
 const fileInput = ref(null)
-const selectedFile = ref(null)
-const existingFile = ref(null)
+const selectedFiles = ref([])
+const existingFiles = ref([])
 const isDragging = ref(false)
 
 const form = ref({
@@ -317,6 +361,8 @@ const form = ref({
   id_kecamatan: '',
   id_kelurahan: '',
   id_opd: '',
+  id_masyarakat: '',
+  id_pemerintah: '',
   id_bentuk: '',
   id_tahapan: '',
   nama_inovasi: '',
@@ -338,24 +384,68 @@ const isMasyarakat = computed(() => {
   return jenis?.nama_jenis_inisiator?.toLowerCase().includes('masyarakat') ?? false
 })
 
+const isPemerintah = computed(() => {
+  if (!form.value.id_jenis_inisiator) return false
+  const jenis = jenisInisiatorOptions.value.find(j => j.id === Number(form.value.id_jenis_inisiator) || j.id === form.value.id_jenis_inisiator)
+  return jenis?.nama_jenis_inisiator?.toLowerCase().includes('pemerintah') ?? false
+})
+
+const isOPD = computed(() => {
+  if (!form.value.id_jenis_inisiator) return false
+  const jenis = jenisInisiatorOptions.value.find(j => j.id === Number(form.value.id_jenis_inisiator) || j.id === form.value.id_jenis_inisiator)
+  return jenis?.nama_jenis_inisiator?.toLowerCase().includes('opd') ?? false
+})
+
 function onKecamatanChange() {
   form.value.id_kelurahan = ''
 }
 
 function onJenisChange() {
-  // Reset id_opd jika beralih ke masyarakat
-  if (isMasyarakat.value) {
-    form.value.id_opd = ''
-  }
+  if (!isMasyarakat.value) form.value.id_masyarakat = ''
+  if (!isPemerintah.value) form.value.id_pemerintah = ''
+  if (!isOPD.value) form.value.id_opd = ''
 }
 
 function triggerFileSelect() {
   fileInput.value.click()
 }
 
+function handleFiles(files) {
+  msg.value = ''
+  isError.value = false
+  const totalCurrent = selectedFiles.value.length + existingFiles.value.length
+  const allowedNew = 10 - totalCurrent
+  if (allowedNew <= 0) {
+    msg.value = 'Maksimal 10 media inovasi.'
+    isError.value = true
+    return
+  }
+  const filesToAdd = Array.from(files)
+  const validFiles = []
+  for (const file of filesToAdd) {
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      msg.value = `File "${file.name}" melebihi batas 10MB.`
+      isError.value = true
+      continue
+    }
+    validFiles.push(file)
+  }
+  if (validFiles.length > allowedNew) {
+    msg.value = `Hanya dapat menambahkan ${allowedNew} file lagi (Maksimal 10 file).`
+    isError.value = true
+    selectedFiles.value.push(...validFiles.slice(0, allowedNew))
+  } else {
+    selectedFiles.value.push(...validFiles)
+  }
+}
+
 function onFileChange(e) {
   const files = e.target.files
-  if (files && files[0]) selectedFile.value = files[0]
+  if (files && files.length > 0) {
+    handleFiles(files)
+  }
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 function onDragOver() { isDragging.value = true }
@@ -364,13 +454,17 @@ function onDragLeave() { isDragging.value = false }
 function onDrop(e) {
   isDragging.value = false
   const files = e.dataTransfer.files
-  if (files && files[0]) selectedFile.value = files[0]
+  if (files && files.length > 0) {
+    handleFiles(files)
+  }
 }
 
-function clearFile() {
-  selectedFile.value = null
-  existingFile.value = null
-  if (fileInput.value) fileInput.value.value = ''
+function removeSelectedFile(index) {
+  selectedFiles.value.splice(index, 1)
+}
+
+function removeExistingFile(index) {
+  existingFiles.value.splice(index, 1)
 }
 
 function formatFileSize(bytes) {
@@ -385,6 +479,20 @@ async function handleSubmit() {
   submitting.value = true
   msg.value = ''
   try {
+    const totalFiles = selectedFiles.value.length + existingFiles.value.length
+    if (totalFiles < 1) {
+      msg.value = 'Harap unggah minimal 1 media dokumentasi.'
+      isError.value = true
+      submitting.value = false
+      return
+    }
+    if (totalFiles > 10) {
+      msg.value = 'Maksimal 10 media dokumentasi yang diperbolehkan.'
+      isError.value = true
+      submitting.value = false
+      return
+    }
+
     const formData = new FormData()
     formData.append('nama_inisiator', form.value.nama_inisiator)
     if (form.value.id_jenis_inisiator) formData.append('id_jenis_inisiator', form.value.id_jenis_inisiator)
@@ -401,7 +509,14 @@ async function handleSubmit() {
     formData.append('tahun_inovasi', form.value.tahun_inovasi)
     formData.append('is_digital', form.value.is_digital ? '1' : '0')
     if (form.value.link_marketplace) formData.append('link_marketplace', form.value.link_marketplace)
-    if (selectedFile.value) formData.append('file_dokumentasi', selectedFile.value)
+    
+    selectedFiles.value.forEach(file => {
+      formData.append('file_dokumentasi[]', file)
+    })
+
+    if (isEdit.value) {
+      formData.append('existing_files', JSON.stringify(existingFiles.value))
+    }
 
     if (isEdit.value) {
       formData.append('_method', 'PUT')
@@ -435,6 +550,8 @@ onMounted(async () => {
     jenisInisiatorOptions.value = resMeta.data.jenis_inisiators || []
     kecamatanOptions.value = resMeta.data.kecamatans || []
     allKelurahans.value = resMeta.data.kelurahan || resMeta.data.kelurahans || []
+    masyarakatOptions.value = resMeta.data.masyarakats || []
+    pemerintahOptions.value = resMeta.data.pemerintahs || []
     profile = resMeta.data.inisiator_profile
 
     if (profile && !isEdit.value) {
@@ -471,8 +588,8 @@ onMounted(async () => {
       const linkMedia = data.media_inovasi?.find(m => m.jenis_media === 'link')
       if (linkMedia) form.value.link_marketplace = linkMedia.isi_konten
 
-      const fileMedia = data.media_inovasi?.find(m => m.jenis_media === 'file')
-      if (fileMedia) existingFile.value = fileMedia.isi_konten
+      const fileMedias = data.media_inovasi?.filter(m => m.jenis_media === 'file') || []
+      existingFiles.value = fileMedias.map(m => m.isi_konten)
     } catch (e) {
       console.error(e)
     }
