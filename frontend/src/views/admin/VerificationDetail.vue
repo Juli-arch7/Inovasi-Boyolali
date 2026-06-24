@@ -239,26 +239,54 @@
             </div>
 
             <!-- Action Logs Card -->
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm p-5">
-              <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                Riwayat Aktivitas
-              </h3>
-              
-              <div v-if="logs.length > 0" class="space-y-4">
-                <div v-for="log in logs" :key="log.id" class="flex gap-3">
-                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <CheckCircle2 v-if="log.action === 'verify_product'" class="w-4 h-4 text-emerald-500" />
-                    <User v-else class="w-4 h-4 text-slate-500" />
-                  </div>
-                  <div>
-                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}</p>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{{ log.description }}</p>
-                    <p class="text-[10px] text-slate-400 mt-1">{{ formatDate(log.created_at) }}</p>
-                  </div>
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+                  <Clock class="w-5 h-5 text-indigo-500" />
                 </div>
+                <h2 class="text-base font-bold text-slate-800 dark:text-white">Riwayat Aktivitas</h2>
               </div>
-              <div v-else class="text-center py-4">
-                <p class="text-xs text-slate-400">Belum ada riwayat aktivitas.</p>
+
+              <div v-if="logs.length === 0" class="p-16 text-center">
+                <p class="text-sm font-semibold text-slate-400">Belum ada riwayat aktivitas.</p>
+              </div>
+
+              <div v-else class="overflow-x-auto w-full">
+                <table class="w-full border-collapse text-left">
+                  <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200/50 dark:border-slate-800/50">
+                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Waktu</th>
+                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Administrator</th>
+                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">Aksi</th>
+                      <th class="p-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detail Aktivitas</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
+                    <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors">
+                      <td class="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {{ formatDateTime(log.created_at) }}
+                      </td>
+                      <td class="p-4">
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-bold text-slate-800 dark:text-white">
+                            {{ log.admin?.admin_profile?.nama_admin || log.admin?.name || 'Admin' }}
+                          </span>
+                          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                            {{ log.admin?.role }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="p-4 text-center">
+                        <span class="inline-flex items-center justify-center whitespace-nowrap min-w-max px-3 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-none">
+                          {{ getActionLabel(log.action, log.description) }}
+                        </span>
+                      </td>
+                      <td class="p-4 text-sm text-slate-600 dark:text-slate-400">
+                        {{ log.description }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -359,7 +387,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '../../stores/toast'
 import api from '../../services/api'
 import {
-  ArrowLeft, FileCheck, FileX, CheckCircle2, XCircle, X,
+  ArrowLeft, FileCheck, FileX, CheckCircle2, XCircle, X, Clock,
   ImageOff, ExternalLink, Loader2
 } from 'lucide-vue-next'
 
@@ -404,6 +432,24 @@ function handleImgError(e) {
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function getActionLabel(action, description = '') {
+  switch (action) {
+    case 'verify_product': return 'Verifikasi Inovasi'
+    case 'reject_product': return 'Tolak Inovasi'
+    case 'update_tahapan': return 'Update Tahapan'
+    case 'toggle_product_active': return /nonaktif/i.test(description) ? 'Nonaktif' : /aktif/i.test(description) ? 'Aktif' : 'Toggle Aktif Produk'
+    default: return action
+  }
 }
 
 function getStatusBadgeClass(status) {
