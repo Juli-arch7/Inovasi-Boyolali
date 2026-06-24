@@ -233,8 +233,8 @@
                 </div>
 
                 <!-- Footer Stats & OPD -->
-                <div class="pt-4 border-t border-slate-100 dark:border-slate-800/80">
-                  <div class="flex items-center gap-2 mb-3.5 text-xs text-slate-500 dark:text-slate-400">
+                <div class="-mt-1 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                  <div class="flex items-center gap-2 mb-2.5 text-xs text-slate-500 dark:text-slate-400">
                     <Building2 class="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <span class="truncate font-semibold">{{ product.opd?.nama_opd || 'Inisiator Umum' }}</span>
                   </div>
