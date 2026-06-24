@@ -72,9 +72,9 @@ const menuItems = computed(() => {
     ]
   } else if (auth.userRole === 'superadmin') {
     return [
+      { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/superadmin', label: 'Kelola Admin', icon: UserCheck },
       { path: '/admin/users', label: 'Pengguna', icon: Users },
-      { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/admin/verifikasi', label: 'Verifikasi', icon: ShieldCheck },
       { path: '/admin/products', label: 'Produk Inovasi', icon: Package },
     ]
