@@ -17,20 +17,36 @@
 
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex items-center gap-8">
-          <router-link to="/" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors py-1.5 border-b-2 border-transparent" active-class="text-primary! dark:text-primary! border-primary!">
-            Beranda
-          </router-link>
-          <router-link to="/inovasi" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors py-1.5 border-b-2 border-transparent" active-class="text-primary! dark:text-primary! border-primary!">
+          <router-link
+            to="/inovasi"
+            class="text-sm font-medium transition-colors py-1.5 border-b-2 border-transparent"
+            :class="navLinkClass(isPublicActive)"
+          >
             Inovasi
           </router-link>
           <template v-if="auth.isAuthenticated">
-            <router-link v-if="auth.userRole === 'superadmin'" to="/superadmin" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors py-1.5 border-b-2 border-transparent" active-class="text-primary! dark:text-primary! border-primary!">
+            <router-link
+              v-if="auth.userRole === 'superadmin'"
+              to="/superadmin"
+              class="text-sm font-medium transition-colors py-1.5 border-b-2 border-transparent"
+              :class="navLinkClass(isSuperAdminActive)"
+            >
               Super Admin
             </router-link>
-            <router-link v-if="auth.userRole === 'admin'" to="/admin" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors py-1.5 border-b-2 border-transparent" active-class="text-primary! dark:text-primary! border-primary!">
+            <router-link
+              v-if="auth.userRole === 'admin'"
+              to="/admin"
+              class="text-sm font-medium transition-colors py-1.5 border-b-2 border-transparent"
+              :class="navLinkClass(isAdminActive)"
+            >
               Admin Panel
             </router-link>
-            <router-link v-if="auth.userRole === 'inisiator'" to="/inisiator" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors py-1.5 border-b-2 border-transparent" active-class="text-primary! dark:text-primary! border-primary!">
+            <router-link
+              v-if="auth.userRole === 'inisiator'"
+              to="/inisiator"
+              class="text-sm font-medium transition-colors py-1.5 border-b-2 border-transparent"
+              :class="navLinkClass(isInisiatorActive)"
+            >
               Dashboard Inisiator
             </router-link>
           </template>
@@ -82,20 +98,40 @@
         leave-to-class="opacity-0 -translate-y-4"
       >
         <div v-if="mobileMenuOpen" class="md:hidden border-t border-slate-200/50 dark:border-slate-800/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg px-4 py-4 space-y-3 shadow-lg">
-          <router-link to="/" @click="mobileMenuOpen = false" class="block px-4 py-2.5 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary" active-class="bg-blue-50/50 text-primary dark:bg-blue-950/20">
-            Beranda
-          </router-link>
-          <router-link to="/inovasi" @click="mobileMenuOpen = false" class="block px-4 py-2.5 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary" active-class="bg-blue-50/50 text-primary dark:bg-blue-950/20">
+          <router-link
+            to="/inovasi"
+            @click="mobileMenuOpen = false"
+            class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
+            :class="mobileNavLinkClass(isPublicActive)"
+          >
             Inovasi
           </router-link>
           <template v-if="auth.isAuthenticated">
-            <router-link v-if="auth.userRole === 'superadmin'" to="/superadmin" @click="mobileMenuOpen = false" class="block px-4 py-2.5 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary" active-class="bg-blue-50/50 text-primary dark:bg-blue-950/20">
+            <router-link
+              v-if="auth.userRole === 'superadmin'"
+              to="/superadmin"
+              @click="mobileMenuOpen = false"
+              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
+              :class="mobileNavLinkClass(isSuperAdminActive)"
+            >
               Super Admin
             </router-link>
-            <router-link v-if="auth.userRole === 'admin'" to="/admin" @click="mobileMenuOpen = false" class="block px-4 py-2.5 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary" active-class="bg-blue-50/50 text-primary dark:bg-blue-950/20">
+            <router-link
+              v-if="auth.userRole === 'admin'"
+              to="/admin"
+              @click="mobileMenuOpen = false"
+              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
+              :class="mobileNavLinkClass(isAdminActive)"
+            >
               Admin Panel
             </router-link>
-            <router-link v-if="auth.userRole === 'inisiator'" to="/inisiator" @click="mobileMenuOpen = false" class="block px-4 py-2.5 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary" active-class="bg-blue-50/50 text-primary dark:bg-blue-950/20">
+            <router-link
+              v-if="auth.userRole === 'inisiator'"
+              to="/inisiator"
+              @click="mobileMenuOpen = false"
+              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
+              :class="mobileNavLinkClass(isInisiatorActive)"
+            >
               Dashboard Inisiator
             </router-link>
             <button @click="handleLogoutMobile" class="w-full text-left px-4 py-2.5 rounded-xl text-base font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center gap-2">
@@ -160,8 +196,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useToastStore } from './stores/toast'
 import {
@@ -180,9 +216,27 @@ import {
 const auth = useAuthStore()
 const toastStore = useToastStore()
 const router = useRouter()
+const route = useRoute()
 
 const isDark = ref(false)
 const mobileMenuOpen = ref(false)
+
+const isPublicActive = computed(() => route.path === '/inovasi')
+const isSuperAdminActive = computed(() => route.path.startsWith('/superadmin') || route.path.startsWith('/admin'))
+const isAdminActive = computed(() => route.path.startsWith('/admin'))
+const isInisiatorActive = computed(() => route.path.startsWith('/inisiator'))
+
+function navLinkClass(isActive) {
+  return isActive
+    ? 'text-primary dark:text-primary border-primary'
+    : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary'
+}
+
+function mobileNavLinkClass(isActive) {
+  return isActive
+    ? 'bg-blue-50/50 text-primary dark:bg-blue-950/20'
+    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary'
+}
 
 function toggleDarkMode() {
   isDark.value = !isDark.value
