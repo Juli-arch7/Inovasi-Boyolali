@@ -96,48 +96,6 @@
           </div>
         </div>
 
-        <!-- Total View -->
-        <div class="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group">
-          <div class="absolute top-0 left-0 w-1.5 h-full bg-cyan-500"></div>
-          <div class="flex justify-between items-start">
-            <div class="space-y-2">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">Total Views</span>
-              <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight group-hover:scale-105 transition-transform duration-300">{{ formatCount(stats.total_views) }}</h2>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center text-cyan-500">
-              <Eye class="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Total Likes -->
-        <div class="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group">
-          <div class="absolute top-0 left-0 w-1.5 h-full bg-rose-450"></div>
-          <div class="flex justify-between items-start">
-            <div class="space-y-2">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">Total Likes</span>
-              <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight group-hover:scale-105 transition-transform duration-300">{{ formatCount(stats.total_likes) }}</h2>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-500">
-              <Heart class="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Total Download -->
-        <div class="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group">
-          <div class="absolute top-0 left-0 w-1.5 h-full bg-purple-500"></div>
-          <div class="flex justify-between items-start">
-            <div class="space-y-2">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">Downloads</span>
-              <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight group-hover:scale-105 transition-transform duration-300">{{ formatCount(stats.total_downloads) }}</h2>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/40 flex items-center justify-center text-purple-500">
-              <Download class="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- Charts Section (Grid) -->
@@ -155,22 +113,6 @@
               height="100%" 
               :options="lineChartOptions" 
               :series="lineChartSeries"
-            ></apexchart>
-          </div>
-        </div>
-
-        <!-- Area Chart: User Session Activity -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800 p-6 shadow-sm">
-          <h3 class="text-base font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <span class="w-1 h-5 rounded bg-secondary"></span>
-            Aktivitas Kunjungan User (7 Hari Terakhir)
-          </h3>
-          <div class="h-[300px]">
-            <apexchart 
-              type="area" 
-              height="100%" 
-              :options="areaChartOptions" 
-              :series="areaChartSeries"
             ></apexchart>
           </div>
         </div>
@@ -222,11 +164,7 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  Users,
-  Eye,
-  Heart,
-  Download,
-  RefreshCw
+  Users
 } from 'lucide-vue-next'
 
 const toastStore = useToastStore()
@@ -237,12 +175,8 @@ const stats = ref({
   pending: 0,
   rejected: 0,
   total_users: 0,
-  total_views: 0,
-  total_likes: 0,
-  total_downloads: 0,
   per_bulan: [],
   per_bentuk: [],
-  aktivitas_user: []
 })
 
 async function loadStats() {
@@ -288,52 +222,7 @@ const lineChartSeries = computed(() => [{
   data: stats.value.per_bulan?.map(b => b.total) || []
 }])
 
-// 2. Area Chart (User Session Activity) Configuration
-const areaChartOptions = computed(() => {
-  const isDarkTheme = document.documentElement.classList.contains('dark')
-  return {
-    chart: {
-      type: 'area',
-      toolbar: { show: false },
-      background: 'transparent'
-    },
-    colors: ['#06B6D4', '#2563EB'], // Cyan, Blue
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.35,
-        opacityTo: 0.05,
-        stops: [0, 90, 100]
-      }
-    },
-    stroke: { curve: 'smooth', width: 2.5 },
-    xaxis: {
-      categories: stats.value.aktivitas_user?.map(u => u.tanggal) || [],
-      labels: { style: { colors: isDarkTheme ? '#94a3b8' : '#64748b' } }
-    },
-    yaxis: {
-      labels: {
-        style: { colors: isDarkTheme ? '#94a3b8' : '#64748b' },
-        formatter: (val) => val.toFixed(0)
-      }
-    },
-    grid: { borderColor: isDarkTheme ? '#334155' : '#f1f5f9' },
-    theme: { mode: isDarkTheme ? 'dark' : 'light' },
-    tooltip: { theme: isDarkTheme ? 'dark' : 'light' }
-  }
-})
-
-const areaChartSeries = computed(() => [
-  {
-    name: 'Kunjungan Portal',
-    data: stats.value.aktivitas_user?.map(u => u.kunjungan) || []
-  },
-  {
-    name: 'Pengguna Aktif',
-    data: stats.value.aktivitas_user?.map(u => u.aktif) || []
-  }
-])
+// 2. Bar Chart (placeholder numbering kept)
 
 // 3. Bar Chart (Category Breakdown) Configuration
 const barChartOptions = computed(() => {

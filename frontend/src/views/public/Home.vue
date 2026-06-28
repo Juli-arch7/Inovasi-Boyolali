@@ -239,18 +239,7 @@
                     <span class="truncate font-semibold">{{ product.opd?.nama_opd || 'Inisiator Umum' }}</span>
                   </div>
                   
-                  <div class="flex items-center justify-between">
-                    <!-- Views / Likes Info -->
-                    <div class="flex items-center gap-4">
-                      <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-500">
-                        <Eye class="w-4 h-4 text-slate-400" />
-                        {{ formatNumber(product.views_count) }}
-                      </span>
-                      <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-500">
-                        <Heart class="w-4 h-4 text-slate-400" />
-                        {{ formatNumber(product.likes_count) }}
-                      </span>
-                    </div>
+                  <div class="flex items-center justify-end">
 
                     <!-- Action Buttons -->
                     <div class="flex items-center gap-2">
@@ -293,7 +282,6 @@ import {
   SlidersHorizontal, 
   Calendar, 
   Building2, 
-  Eye, 
   Heart, 
   ArrowRight, 
   Sparkles 
@@ -449,13 +437,6 @@ function handleImgError(e) {
   e.target.src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop'
 }
 
-function formatNumber(num) {
-  if (num === undefined || num === null) return 0
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
-  }
-  return num
-}
 
 function toggleFavorite(product) {
   const index = favorites.value.indexOf(product.id)

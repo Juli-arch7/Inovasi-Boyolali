@@ -42,13 +42,7 @@
         </div>
       </div>
 
-      <!-- Stats at bottom -->
-      <div class="grid grid-cols-3 gap-4">
-        <div v-for="stat in stats" :key="stat.label" class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 text-center">
-          <p class="text-2xl font-black text-white">{{ stat.value }}</p>
-          <p class="text-xs text-slate-400 font-medium mt-0.5">{{ stat.label }}</p>
-        </div>
-      </div>
+      <p class="text-xs text-slate-500">© 2025 Portal Inovasi Boyolali. All rights reserved.</p>
     </div>
 
     <!-- Right: Login Form -->
@@ -117,8 +111,7 @@
               </div>
             </div>
 
-            <!-- Remember Me -->
-            <div class="flex items-center justify-between">
+            <div class="flex items-center">
               <label class="flex items-center gap-2 cursor-pointer">
                 <div
                   @click="rememberMe = !rememberMe"
@@ -129,9 +122,6 @@
                 </div>
                 <span class="text-sm text-slate-300 font-medium select-none">Ingat Saya</span>
               </label>
-              <router-link to="/forgot-password" class="text-xs text-cyan-400 font-semibold hover:underline">
-                Lupa Password?
-              </router-link>
             </div>
 
             <!-- Submit Button -->
@@ -178,12 +168,6 @@ const features = [
   { icon: ShieldCheck, label: 'Sistem Terenkripsi' },
   { icon: BarChart3, label: 'Dashboard Real-time' },
   { icon: Globe, label: 'Portal Publik' },
-]
-
-const stats = [
-  { value: '100+', label: 'Inovasi' },
-  { value: '50+', label: 'Inisiator' },
-  { value: '15+', label: 'OPD' },
 ]
 
 async function handleLogin() {

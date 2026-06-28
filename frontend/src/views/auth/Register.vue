@@ -79,6 +79,38 @@
           </div>
 
           <form @submit.prevent="handleRegister" class="space-y-4">
+            <!-- Nama Lengkap Field -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Nama Lengkap</label>
+              <div class="relative">
+                <UserCircle class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="name"
+                  type="text"
+                  v-model="name"
+                  placeholder="Masukkan nama lengkap Anda"
+                  required
+                  class="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/60 transition-all"
+                />
+              </div>
+            </div>
+
+            <!-- Email Field -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Alamat Email</label>
+              <div class="relative">
+                <Mail class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="email"
+                  type="email"
+                  v-model="email"
+                  placeholder="Masukkan alamat email Anda"
+                  required
+                  class="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/60 transition-all"
+                />
+              </div>
+            </div>
+
             <!-- Username Field -->
             <div>
               <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Username</label>
@@ -180,14 +212,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
-import {
-  Lightbulb, User, Lock, Eye, EyeOff, Check, AlertCircle,
+import { Lightbulb, User, UserCircle, Mail, Lock, Eye, EyeOff, Check, AlertCircle,
   CheckCircle2, Loader2
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
 
+const name = ref('')
+const email = ref('')
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -220,6 +253,8 @@ async function handleRegister() {
 
   try {
     await auth.register({
+      name: name.value,
+      email: email.value,
       username: username.value,
       password: password.value,
       role: 'inisiator'

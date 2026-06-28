@@ -21,22 +21,6 @@ class AdminController extends Controller
         $totalInisiator = User::where('role', 'inisiator')->count();
         $totalUsers = User::count();
 
-        // Sum metrics
-        $totalViews = ProdukInovasi::sum('views_count');
-        $totalLikes = ProdukInovasi::sum('likes_count');
-        $totalDownloads = ProdukInovasi::sum('downloads_count');
-
-        // Inovasi per tahun (5 tahun terakhir)
-        $currentYear = now()->year;
-        $perTahun = [];
-        for ($y = $currentYear - 4; $y <= $currentYear; $y++) {
-            $perTahun[] = [
-                'tahun' => $y,
-                'total' => ProdukInovasi::whereYear('created_at', $y)->count(),
-                'approved' => ProdukInovasi::whereYear('created_at', $y)->where('status_kurasi', 'approved')->count(),
-            ];
-        }
-
         // Inovasi per bulan (12 bulan terakhir)
         $perBulan = [];
         for ($m = 11; $m >= 0; $m--) {
@@ -52,17 +36,6 @@ class AdminController extends Controller
             'kategori' => $b->nama_bentuk,
             'total' => ProdukInovasi::where('id_bentuk', $b->id)->count(),
         ]);
-
-        // Aktivitas user (Area Chart - last 7 days simulation)
-        $aktivitasUser = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i);
-            $aktivitasUser[] = [
-                'tanggal' => $date->format('d M'),
-                'aktif' => rand(150, 450),
-                'kunjungan' => rand(500, 1500),
-            ];
-        }
 
         // Top 5 OPD by inovasi
         $topOpd = ProdukInovasi::selectRaw('id_opd, count(*) as total')
@@ -96,13 +69,8 @@ class AdminController extends Controller
             'total_opd' => $totalOpd,
             'total_inisiator' => $totalInisiator,
             'total_users' => $totalUsers,
-            'total_views' => $totalViews,
-            'total_likes' => $totalLikes,
-            'total_downloads' => $totalDownloads,
-            'per_tahun' => $perTahun,
             'per_bulan' => $perBulan,
             'per_bentuk' => $perBentuk,
-            'aktivitas_user' => $aktivitasUser,
             'top_opd' => $topOpd,
             'terbaru' => $terbaru,
         ]);
