@@ -28,8 +28,6 @@ class PublicController extends Controller
             ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile'])
             ->findOrFail($id);
             
-        $product->increment('views_count');
-        
         return response()->json($product);
     }
 

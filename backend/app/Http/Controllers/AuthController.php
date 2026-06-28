@@ -11,17 +11,12 @@ class AuthController extends Controller
 {
     public function register(Request $request) {
         $data = $request->validate([
-            'name' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users',
-            'email' => 'nullable|string|email|unique:users',
+            'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'nullable|string'
         ]);
-
-        // If email is missing, generate one from username
-        if (empty($data['email'])) {
-            $data['email'] = $data['username'] . '@inv.com';
-        }
 
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);

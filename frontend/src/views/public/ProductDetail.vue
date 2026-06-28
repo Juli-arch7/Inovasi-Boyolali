@@ -196,41 +196,16 @@
               </div>
             </div>
 
-            <!-- Stats counter display -->
-            <div class="grid grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-              <div class="text-center">
-                <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Views</div>
-                <div class="text-base font-extrabold text-slate-800 dark:text-white mt-1">{{ views }}</div>
-              </div>
-              <div class="text-center">
-                <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Likes</div>
-                <div class="text-base font-extrabold text-slate-800 dark:text-white mt-1">{{ likes }}</div>
-              </div>
-              <div class="text-center">
-                <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Downloads</div>
-                <div class="text-base font-extrabold text-slate-800 dark:text-white mt-1">{{ downloads }}</div>
-              </div>
-            </div>
-
             <!-- Action Buttons -->
             <div class="flex flex-col gap-3">
-              <div class="flex gap-2">
-                <button 
-                  @click="handleLike" 
-                  class="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Heart class="w-4 h-4" :class="isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-500'" />
-                  {{ isLiked ? 'Liked' : 'Suka Inovasi' }}
-                </button>
-
-                <button 
-                  @click="toggleFavorite" 
-                  class="px-3 h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                  :title="isFavorited ? 'Hapus dari Favorit' : 'Tambah ke Favorit'"
-                >
-                  <Bookmark class="w-4 h-4" :class="isFavorited ? 'fill-primary text-primary' : 'text-slate-500'" />
-                </button>
-              </div>
+              <button
+                @click="toggleFavorite"
+                class="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm"
+                :title="isFavorited ? 'Hapus dari Favorit' : 'Tambah ke Favorit'"
+              >
+                <Bookmark class="w-4 h-4" :class="isFavorited ? 'fill-primary text-primary' : 'text-slate-500'" />
+                {{ isFavorited ? 'Tersimpan di Favorit' : 'Simpan ke Favorit' }}
+              </button>
 
               <!-- Marketplace / Download Link -->
               <div v-if="marketplaceLink">
@@ -238,7 +213,6 @@
                   :href="marketplaceLink" 
                   target="_blank" 
                   rel="noopener" 
-                  @click="handleDownload"
                   class="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                 >
                   <ExternalLink class="w-4 h-4" />
@@ -247,7 +221,7 @@
               </div>
               <div v-else>
                 <button 
-                  @click="handleDownloadFallback"
+                  @click="showDownloadToast"
                   class="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm cursor-pointer"
                 >
                   <Download class="w-4 h-4" />
@@ -272,8 +246,6 @@ import {
   ArrowLeft,
   Building2,
   Calendar,
-  Eye,
-  Heart,
   Download,
   ExternalLink,
   ShieldCheck,
@@ -289,12 +261,7 @@ const toastStore = useToastStore()
 const product = ref(null)
 const loading = ref(true)
 const selectedImgIdx = ref(0)
-const isLiked = ref(false)
 const isFavorited = ref(false)
-
-const views = ref(0)
-const likes = ref(0)
-const downloads = ref(0)
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')
 
@@ -328,28 +295,6 @@ const marketplaceLink = computed(() => {
   return link?.isi_konten || null
 })
 
-async function handleLike() {
-  if (isLiked.value) {
-    toastStore.show('Anda sudah menyukai inovasi ini.', 'info')
-    return
-  }
-  try {
-    const res = await api.post(`/public/products/${product.value.id}/like`)
-    if (res.data.success) {
-      likes.value = res.data.likes_count
-      isLiked.value = true
-      toastStore.show('Terima kasih! Anda menyukai inovasi ini.', 'success')
-      
-      // Save like status in local storage for persistence
-      const likedProducts = JSON.parse(localStorage.getItem('liked_products') || '[]')
-      likedProducts.push(product.value.id)
-      localStorage.setItem('liked_products', JSON.stringify(likedProducts))
-    }
-  } catch (e) {
-    toastStore.show('Gagal mengirim feedback suka.', 'error')
-  }
-}
-
 function toggleFavorite() {
   const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
   const index = favorites.indexOf(product.value.id)
@@ -366,19 +311,7 @@ function toggleFavorite() {
   localStorage.setItem('favorites', JSON.stringify(favorites))
 }
 
-async function handleDownload() {
-  try {
-    const res = await api.post(`/public/products/${product.value.id}/download`)
-    if (res.data.success) {
-      downloads.value = res.data.downloads_count
-    }
-  } catch (e) {
-    console.error('Failed to increment download count', e)
-  }
-}
-
-async function handleDownloadFallback() {
-  await handleDownload()
+function showDownloadToast() {
   toastStore.show('Mengunduh lampiran dokumen inovasi...', 'success')
 }
 
@@ -387,18 +320,10 @@ onMounted(async () => {
     const endpoint = isInisiatorRoute.value ? `/inisiator/products/${route.params.id}` : `/public/products/${route.params.id}`
     const res = await api.get(endpoint)
     product.value = res.data
-    
-    // Set counters
-    views.value = product.value.views_count + 1 // Add local temporary increment for immediate render
-    likes.value = product.value.likes_count
-    downloads.value = product.value.downloads_count
 
-    // Load status from local storage
+    // Load favorite status from local storage
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
     isFavorited.value = favorites.includes(product.value.id)
-
-    const likedProducts = JSON.parse(localStorage.getItem('liked_products') || '[]')
-    isLiked.value = likedProducts.includes(product.value.id)
   } catch (e) {
     console.error('Failed to load product details', e)
     toastStore.show('Gagal memuat detail inovasi.', 'error')

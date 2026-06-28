@@ -206,7 +206,7 @@
               </div>
               <h2 class="text-base font-bold text-slate-800 dark:text-white">Media Dokumentasi</h2>
             </div>
-            <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/30 text-rose-500">Wajib (1 - 10 File)</span>
+            <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/30 text-rose-500">Maksimal (1 - 10 File)</span>
           </div>
           <div class="p-6">
 
