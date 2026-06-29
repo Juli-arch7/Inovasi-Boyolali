@@ -22,8 +22,9 @@
           <FileX class="w-8 h-8 text-slate-300 dark:text-slate-600" />
         </div>
         <p class="text-sm font-semibold text-slate-500">Produk tidak ditemukan.</p>
+        
         <button
-          @click="$router.push('/admin/verifikasi')"
+          @click="goBack"
           class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-white hover:bg-blue-700 transition-all cursor-pointer"
         >
           <ArrowLeft class="w-4 h-4" /> Kembali
@@ -36,16 +37,20 @@
         <div class="pb-6 mb-8 border-b border-slate-200/50 dark:border-slate-800/50">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-3">
+              
               <button
-                @click="$router.push('/admin/verifikasi')"
+                @click="goBack"
                 class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
                 <ArrowLeft class="w-4 h-4" /> Kembali
               </button>
+              
               <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Detail Verifikasi</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+                  {{ pageTitle }}
+                </h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                  Tinjau dan verifikasi ajuan inovasi ini.
+                  {{ pageDescription }}
                 </p>
               </div>
             </div>
@@ -614,6 +619,32 @@ const handleUpdateTahapan = async () => {
     updatingTahapan.value = false
   }
 }
+
+// 🎯 TAMBAHKAN LOGIC BARU INI
+function goBack() {
+  // Mengecek teks ?ref=products di URL browser
+  if (route.query.ref === 'products') {
+    router.push('/admin/products') // Balik ke Daftar Produk
+  } else {
+    router.push('/admin/verifikasi') // Balik ke Daftar Verifikasi (Default)
+  }
+}
+
+// 🎯 Membuat judul dinamis berdasarkan halaman asal (URL query)
+const pageTitle = computed(() => {
+  if (route.query.ref === 'products') {
+    return 'Detail Produk Inovasi'
+  }
+  return 'Detail Verifikasi'
+})
+
+// 🎯 Membuat deskripsi dinamis berdasarkan halaman asal
+const pageDescription = computed(() => {
+  if (route.query.ref === 'products') {
+    return 'Lihat rincian data produk inovasi Kabupaten Boyolali.'
+  }
+  return 'Tinjau dan verifikasi ajuan inovasi ini.'
+})
 
 onMounted(async () => {
   await loadProduct()

@@ -172,7 +172,8 @@ const filteredProducts = computed(() => {
 })
 
 function goToDetail(id) {
-  router.push(`/admin/verifikasi/${id}`)
+  // Tambahkan query parameter 'ref=products'
+  router.push(`/admin/verifikasi/${id}?ref=products`)
 }
 
 async function toggleActive(product) {
