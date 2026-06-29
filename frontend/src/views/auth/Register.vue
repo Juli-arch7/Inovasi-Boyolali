@@ -48,7 +48,7 @@
     </div>
 
     <!-- Right: Register Form -->
-    <div class="flex-1 flex items-center justify-center p-6 sm:p-10 relative">
+    <div class="flex-1 flex items-center justify-center p-4 sm:p-10 relative">
       <div class="w-full max-w-md">
 
         <!-- Mobile Logo -->
@@ -60,7 +60,7 @@
         </div>
 
         <!-- Card -->
-        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 shadow-2xl">
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-2xl">
           <div class="mb-8">
             <h2 class="text-2xl font-extrabold text-white">Buat Akun Baru ✨</h2>
             <p class="text-slate-300/70 text-sm mt-1">Daftar sebagai inisiator inovasi</p>
@@ -182,7 +182,7 @@
                   <Check v-if="agree" class="w-2.5 h-2.5 text-white" />
                 </div>
                 <span class="text-sm text-slate-300 leading-relaxed select-none">
-                  Saya setuju dengan <span class="text-purple-400 font-semibold">Syarat & Ketentuan</span> dan <span class="text-purple-400 font-semibold">Kebijakan Privasi</span>
+                  Saya setuju dengan <a href="#" @click.prevent.stop class="text-purple-400 font-semibold hover:underline">Syarat &amp; Ketentuan</a> dan <a href="#" @click.prevent.stop class="text-purple-400 font-semibold hover:underline">Kebijakan Privasi</a>
                 </span>
               </label>
             </div>
