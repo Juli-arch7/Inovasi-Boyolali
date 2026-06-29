@@ -107,33 +107,29 @@
             Inovasi
           </router-link>
           <template v-if="auth.isAuthenticated">
+            <!-- Role-based Dashboard Links for Mobile Menu -->
+            <div class="border-t border-slate-200/50 dark:border-slate-800/50 my-2"></div>
+            <div class="px-4 py-1 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Panel</div>
+            
             <router-link
-              v-if="auth.userRole === 'superadmin'"
-              to="/superadmin"
+              v-for="item in mobileMenuItems"
+              :key="item.path"
+              :to="item.path"
               @click="mobileMenuOpen = false"
-              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
-              :class="mobileNavLinkClass(isSuperAdminActive)"
+              v-slot="{ isActive, isExactActive }"
             >
-              Super Admin
+              <div
+                class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors flex items-center gap-3"
+                :class="(item.path === '/admin' || item.path === '/inisiator') 
+                  ? (isExactActive ? 'bg-blue-50/50 text-primary dark:bg-blue-950/20 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary')
+                  : (isActive ? 'bg-blue-50/50 text-primary dark:bg-blue-950/20 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary')"
+              >
+                <component :is="item.icon" class="w-5 h-5 text-slate-450 dark:text-slate-505" />
+                <span>{{ item.label }}</span>
+              </div>
             </router-link>
-            <router-link
-              v-if="auth.userRole === 'admin'"
-              to="/admin"
-              @click="mobileMenuOpen = false"
-              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
-              :class="mobileNavLinkClass(isAdminActive)"
-            >
-              Admin Panel
-            </router-link>
-            <router-link
-              v-if="auth.userRole === 'inisiator'"
-              to="/inisiator"
-              @click="mobileMenuOpen = false"
-              class="block px-4 py-2.5 rounded-xl text-base font-semibold transition-colors"
-              :class="mobileNavLinkClass(isInisiatorActive)"
-            >
-              Dashboard Inisiator
-            </router-link>
+
+            <div class="border-t border-slate-200/50 dark:border-slate-800/50 my-2"></div>
             <button @click="handleLogoutMobile" class="w-full text-left px-4 py-2.5 rounded-xl text-base font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center gap-2">
               <LogOut class="w-4 h-4" />
               Keluar
@@ -210,7 +206,15 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Info
+  Info,
+  LayoutDashboard,
+  ShieldCheck,
+  Package,
+  Users,
+  UserCheck,
+  Lightbulb,
+  PlusCircle,
+  History
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -225,6 +229,32 @@ const isPublicActive = computed(() => route.path === '/inovasi')
 const isSuperAdminActive = computed(() => route.path.startsWith('/superadmin') || route.path.startsWith('/admin'))
 const isAdminActive = computed(() => route.path.startsWith('/admin'))
 const isInisiatorActive = computed(() => route.path.startsWith('/inisiator'))
+
+const mobileMenuItems = computed(() => {
+  if (auth.userRole === 'inisiator') {
+    return [
+      { path: '/inisiator', label: 'Inovasi Saya', icon: Lightbulb },
+      { path: '/inisiator/pengajuan', label: 'Pengajuan Inovasi', icon: PlusCircle },
+    ]
+  } else if (auth.userRole === 'superadmin') {
+    return [
+      { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/superadmin', label: 'Kelola Admin', icon: UserCheck },
+      { path: '/admin/users', label: 'Pengguna', icon: Users },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: ShieldCheck },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: Package },
+      { path: '/admin/logs', label: 'Log Aktivitas', icon: History },
+    ]
+  } else if (auth.userRole === 'admin') {
+    return [
+      { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/admin/verifikasi', label: 'Verifikasi', icon: ShieldCheck },
+      { path: '/admin/products', label: 'Produk Inovasi', icon: Package },
+      { path: '/admin/logs', label: 'Log Aktivitas', icon: History },
+    ]
+  }
+  return []
+})
 
 function navLinkClass(isActive) {
   return isActive
