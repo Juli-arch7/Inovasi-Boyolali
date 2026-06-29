@@ -12,24 +12,14 @@ class AdminController extends Controller
 {
     public function getStats()
     {
-        $total      = ProdukInovasi::count();
-        $approved   = ProdukInovasi::where('status_kurasi', 'approved')->count();
-        $pending    = ProdukInovasi::where('status_kurasi', 'pending')->count();
-        $rejected   = ProdukInovasi::where('status_kurasi', 'rejected')->count();
-        $nonaktif   = ProdukInovasi::where('is_active', false)->count();
-        $totalOpd   = OPD::count();
+        $total = ProdukInovasi::count();
+        $approved = ProdukInovasi::where('status_kurasi', 'approved')->count();
+        $pending = ProdukInovasi::where('status_kurasi', 'pending')->count();
+        $rejected = ProdukInovasi::where('status_kurasi', 'rejected')->count();
+        $nonaktif = ProdukInovasi::where('is_active', false)->count();
+        $totalOpd = OPD::count();
         $totalInisiator = User::where('role', 'inisiator')->count();
-
-        // Inovasi per tahun (5 tahun terakhir)
-        $currentYear = now()->year;
-        $perTahun = [];
-        for ($y = $currentYear - 4; $y <= $currentYear; $y++) {
-            $perTahun[] = [
-                'tahun' => $y,
-                'total' => ProdukInovasi::whereYear('created_at', $y)->count(),
-                'approved' => ProdukInovasi::whereYear('created_at', $y)->where('status_kurasi', 'approved')->count(),
-            ];
-        }
+        $totalUsers = User::count();
 
         // Inovasi per bulan (12 bulan terakhir)
         $perBulan = [];
@@ -40,6 +30,12 @@ class AdminController extends Controller
                 'total' => ProdukInovasi::whereYear('created_at', $date->year)->whereMonth('created_at', $date->month)->count(),
             ];
         }
+
+        // Inovasi per bentuk (kategori)
+        $perBentuk = \App\Models\BentukInovasi::all()->map(fn($b) => [
+            'kategori' => $b->nama_bentuk,
+            'total' => ProdukInovasi::where('id_bentuk', $b->id)->count(),
+        ]);
 
         // Top 5 OPD by inovasi
         $topOpd = ProdukInovasi::selectRaw('id_opd, count(*) as total')
@@ -72,8 +68,9 @@ class AdminController extends Controller
             'nonaktif' => $nonaktif,
             'total_opd' => $totalOpd,
             'total_inisiator' => $totalInisiator,
-            'per_tahun' => $perTahun,
+            'total_users' => $totalUsers,
             'per_bulan' => $perBulan,
+            'per_bentuk' => $perBentuk,
             'top_opd' => $topOpd,
             'terbaru' => $terbaru,
         ]);
@@ -126,6 +123,7 @@ class AdminController extends Controller
     {
         $request->validate([
             'id_tahapan' => 'required|exists:tahapan_inovasis,id',
+            'status_tahapan' => 'required|string|max:255',
         ]);
 
         $product = ProdukInovasi::with('tahapanInovasi')->findOrFail($id);
@@ -149,6 +147,7 @@ class AdminController extends Controller
 
         $product->update([
             'id_tahapan' => $request->id_tahapan,
+            'status_tahapan' => $request->status_tahapan,
         ]);
 
         $product->load('tahapanInovasi');
@@ -160,7 +159,7 @@ class AdminController extends Controller
             'action' => 'update_tahapan',
             'target_id' => $product->id,
             'target_type' => 'product',
-            'description' => 'Mengubah tahapan produk inovasi "' . $product->nama_inovasi . '" dari "' . ($oldTahapanName ?? '-') . '" menjadi "' . ($newTahapanName ?? '-') . '"',
+            'description' => 'Mengubah tahapan produk inovasi "' . $product->nama_inovasi . '" dari "' . ($oldTahapanName ?? '-') . '" menjadi "' . ($newTahapanName ?? '-') . '" dengan status: "' . $request->status_tahapan . '"',
         ]);
 
         return response()->json([
@@ -189,9 +188,7 @@ class AdminController extends Controller
 
     public function getProductDetail($id)
     {
-        $product = ProdukInovasi::with([
-            'inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile'
-        ])->findOrFail($id);
+        $product = ProdukInovasi::with(['inisiatorProfile', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile.user'])->findOrFail($id);
         return response()->json($product);
     }
 
@@ -261,7 +258,13 @@ class AdminController extends Controller
     {
         $query = \App\Models\AdminLog::with(['admin.adminProfile']);
 
-        if ($request->has('target_type')) {
+        // Admin hanya bisa melihat log produk inovasi, superadmin bisa lihat semua
+        $userRole = $request->user()->role;
+        if ($userRole !== 'superadmin') {
+            $query->where('target_type', 'product');
+        }
+
+        if ($request->has('target_type') && $request->target_type !== '') {
             $query->where('target_type', $request->target_type);
         }
 

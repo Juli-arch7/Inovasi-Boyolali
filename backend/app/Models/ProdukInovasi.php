@@ -11,7 +11,8 @@ class ProdukInovasi extends Model
     protected $fillable = [
         'id_inisiator', 'id_opd', 'id_pemerintah', 'id_masyarakat', 'id_bentuk', 'id_tahapan','id_kecamatan', 'id_kelurahan', 'kontak', 'link_marketplace', 'media_inovasi', 'id_admin',
         'nama_inovasi', 'deskripsi', 'tahun_inovasi', 'status_kurasi', 'is_digital',
-        'alasan_penolakan', 'tanggal_review', 'is_active'
+        'alasan_penolakan', 'tanggal_review', 'is_active', 'views_count', 'likes_count', 'downloads_count',
+        'status_tahapan'
     ];
 
     public function inisiatorProfile() {
