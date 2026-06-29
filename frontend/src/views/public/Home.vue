@@ -44,12 +44,12 @@
         </div>
 
         <!-- Category Pills -->
-        <div class="mt-8 flex justify-center gap-2.5 flex-wrap">
+        <div class="mt-8 flex items-center justify-start md:justify-center gap-2.5 overflow-x-auto no-scrollbar pb-3 px-4 -mx-4 md:mx-0 md:overflow-x-visible md:pb-0 md:px-0 scroll-smooth">
           <button 
             v-for="cat in categories" 
             :key="cat.value"
             @click="filters.category = cat.value"
-            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all duration-200 cursor-pointer"
+            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all duration-200 cursor-pointer flex-shrink-0"
             :class="filters.category === cat.value 
               ? 'bg-primary border-primary text-white shadow-md shadow-primary/20 scale-[1.03]' 
               : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'"
