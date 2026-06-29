@@ -42,7 +42,7 @@ class InisiatorController extends Controller
             return response()->json(['message' => 'Profile not found'], 404);
         }
 
-        $products = ProdukInovasi::where('id_inisiator', $user->inisiatorProfile->id)->with(['opd', 'bentukInovasi', 'tahapanInovasi'])->get();
+        $products = ProdukInovasi::where('id_inisiator', $user->inisiatorProfile->id)->with(['opd', 'pemerintah', 'masyarakat', 'bentukInovasi', 'tahapanInovasi'])->get();
         return response()->json($products);
     }
 
@@ -56,8 +56,10 @@ class InisiatorController extends Controller
         $product = ProdukInovasi::where('id', $id)
             ->where('id_inisiator', $user->inisiatorProfile->id)
             ->with([
-                'mediaInovasi', 
-                'opd', 
+                'mediaInovasi',
+                'opd',
+                'pemerintah',
+                'masyarakat',
                 'bentukInovasi', 
                 'tahapanInovasi',
                 'inisiatorProfile', // Tarik juga profilnya jika Vue butuh nama/jenis inisiator

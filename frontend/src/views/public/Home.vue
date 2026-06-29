@@ -242,17 +242,7 @@
                   <div class="flex items-center justify-end">
 
                     <!-- Action Buttons -->
-                    <div class="flex items-center gap-2">
-                      <button 
-                        @click.stop="toggleFavorite(product)"
-                        class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center transition-all cursor-pointer hover:scale-[1.05]"
-                      >
-                        <Heart 
-                          class="w-4 h-4" 
-                          :class="isFavorited(product.id) ? 'fill-rose-500 text-rose-500 animate-pulse' : 'text-slate-500'" 
-                        />
-                      </button>
-                      
+                    <div class="flex items-center gap-2">                      
                       <button 
                         @click="goToDetail(product.id)"
                         class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-hover shadow-sm hover:shadow shadow-primary/10 transition-all cursor-pointer hover:translate-x-0.5"
@@ -435,19 +425,6 @@ function getProductImage(product) {
 
 function handleImgError(e) {
   e.target.src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop'
-}
-
-
-function toggleFavorite(product) {
-  const index = favorites.value.indexOf(product.id)
-  if (index >= 0) {
-    favorites.value.splice(index, 1)
-    toastStore.show(`"${product.nama_inovasi}" dihapus dari favorit.`, 'warning')
-  } else {
-    favorites.value.push(product.id)
-    toastStore.show(`"${product.nama_inovasi}" ditambahkan ke favorit.`, 'success')
-  }
-  localStorage.setItem('favorites', JSON.stringify(favorites.value))
 }
 
 function isFavorited(id) {

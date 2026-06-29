@@ -146,12 +146,13 @@
                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ product.is_digital ? 'Digital (Web/App)' : 'Non-Digital' }}</span>
               </div>
 
-              <!-- OPD -->
-              <div class="flex items-col flex-col gap-1 py-2 border-b border-slate-50 dark:border-slate-800/40">
-                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Lembaga / OPD</span>
+              <div class="flex flex-col gap-1 py-2 border-b border-slate-50 dark:border-slate-800/40">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">
+                  {{ institusiInfo.label }}
+                </span>
                 <div class="flex items-start gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
                   <Building2 class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                  <span>{{ product.opd?.nama_opd || 'Dinas Kabupaten Boyolali' }}</span>
+                  <span>{{ institusiInfo.nama }}</span>
                 </div>
               </div>
 
@@ -198,14 +199,6 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-col gap-3">
-              <button
-                @click="toggleFavorite"
-                class="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] font-semibold text-sm"
-                :title="isFavorited ? 'Hapus dari Favorit' : 'Tambah ke Favorit'"
-              >
-                <Bookmark class="w-4 h-4" :class="isFavorited ? 'fill-primary text-primary' : 'text-slate-500'" />
-                {{ isFavorited ? 'Tersimpan di Favorit' : 'Simpan ke Favorit' }}
-              </button>
 
               <!-- Marketplace / Download Link -->
               <div v-if="marketplaceLink">
@@ -218,15 +211,6 @@
                   <ExternalLink class="w-4 h-4" />
                   Kunjungi Marketplace
                 </a>
-              </div>
-              <div v-else>
-                <button 
-                  @click="showDownloadToast"
-                  class="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm cursor-pointer"
-                >
-                  <Download class="w-4 h-4" />
-                  Unduh Dokumen Inovasi
-                </button>
               </div>
             </div>
           </div>
@@ -261,7 +245,6 @@ const toastStore = useToastStore()
 const product = ref(null)
 const loading = ref(true)
 const selectedImgIdx = ref(0)
-const isFavorited = ref(false)
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')
 
@@ -295,35 +278,46 @@ const marketplaceLink = computed(() => {
   return link?.isi_konten || null
 })
 
-function toggleFavorite() {
-  const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-  const index = favorites.indexOf(product.value.id)
-  
-  if (index >= 0) {
-    favorites.splice(index, 1)
-    isFavorited.value = false
-    toastStore.show('Inovasi dihapus dari bookmark favorit Anda.', 'warning')
-  } else {
-    favorites.push(product.value.id)
-    isFavorited.value = true
-    toastStore.show('Inovasi disimpan ke bookmark favorit Anda.', 'success')
-  }
-  localStorage.setItem('favorites', JSON.stringify(favorites))
-}
+// Mendeteksi label lembaga dinamis berdasarkan data yang terisi dari backend
+const institusiInfo = computed(() => {
+  if (!product.value) return { label: 'Lembaga / OPD', nama: 'Dinas Kabupaten Boyolali' }
 
-function showDownloadToast() {
-  toastStore.show('Mengunduh lampiran dokumen inovasi...', 'success')
-}
+  // 1. Jika diajukan oleh OPD / Pemerintah
+  if (product.value.opd) {
+    return {
+      label: 'Kategori OPD',
+      nama: product.value.opd.nama_opd
+    }
+  } 
+  
+  // 2. Jika diajukan oleh Pemerintah Non-OPD (Kecamatan/Pemerintah Desa, dll)
+  if (product.value.pemerintah) {
+    return {
+      label: 'Kategori Pemerintah',
+      nama: product.value.pemerintah.nama_instansi || 'Pemerintah Daerah' // Sesuaikan field backend-mu
+    }
+  }
+
+  // 3. Jika diajukan oleh Kategori Masyarakat (Mahasiswa, Umum, Sekolah, dll)
+  if (product.value.masyarakat) {
+    return {
+      label: 'Kategori Masyarakat',
+      nama: product.value.masyarakat.nama_kelompok || 'Masyarakat Umum' // Sesuaikan field backend-mu
+    }
+  }
+
+  // Fallback default jika tidak ada relasi yang terisi
+  return {
+    label: 'Kategori Pengaju',
+    nama: 'Dinas Kabupaten Boyolali'
+  }
+})
 
 onMounted(async () => {
   try {
     const endpoint = isInisiatorRoute.value ? `/inisiator/products/${route.params.id}` : `/public/products/${route.params.id}`
     const res = await api.get(endpoint)
     product.value = res.data
-
-    // Load favorite status from local storage
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-    isFavorited.value = favorites.includes(product.value.id)
   } catch (e) {
     console.error('Failed to load product details', e)
     toastStore.show('Gagal memuat detail inovasi.', 'error')

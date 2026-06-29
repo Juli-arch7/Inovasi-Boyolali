@@ -23,6 +23,14 @@ class ProdukInovasi extends Model
         return $this->belongsTo(OPD::class, 'id_opd');
     }
 
+    public function pemerintah() {
+        return $this->belongsTo(Pemerintah::class, 'id_pemerintah');
+    }
+
+    public function masyarakat() {
+        return $this->belongsTo(Masyarakat::class, 'id_masyarakat');
+    }
+
     public function bentukInovasi() {
         return $this->belongsTo(BentukInovasi::class, 'id_bentuk');
     }
