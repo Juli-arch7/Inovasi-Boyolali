@@ -46,7 +46,7 @@
     </div>
 
     <!-- Right: Login Form -->
-    <div class="flex-1 flex items-center justify-center p-6 sm:p-10 relative">
+    <div class="flex-1 flex items-center justify-center p-4 sm:p-10 relative">
       <div class="w-full max-w-md">
 
         <!-- Mobile Logo -->
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Card -->
-        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 shadow-2xl">
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-2xl">
           <div class="mb-8">
             <h2 class="text-2xl font-extrabold text-white">Selamat Datang 👋</h2>
             <p class="text-slate-300/70 text-sm mt-1">Masuk untuk mengakses sistem inovasi</p>
