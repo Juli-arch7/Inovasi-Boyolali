@@ -146,13 +146,18 @@
                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ product.is_digital ? 'Digital (Web/App)' : 'Non-Digital' }}</span>
               </div>
 
-              <div class="flex flex-col gap-1 py-2 border-b border-slate-50 dark:border-slate-800/40">
-                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">
-                  {{ institusiInfo.label }}
+              <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Kategori</span>
+                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {{ kategoriUtama }}
                 </span>
-                <div class="flex items-start gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
-                  <Building2 class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                  <span>{{ institusiInfo.nama }}</span>
+              </div>
+
+              <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Sub-kategori</span>
+                <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Building2 class="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span>{{ subKategoriDinamis }}</span>
                 </div>
               </div>
 
@@ -278,39 +283,35 @@ const marketplaceLink = computed(() => {
   return link?.isi_konten || null
 })
 
-// Mendeteksi label lembaga dinamis berdasarkan data yang terisi dari backend
-const institusiInfo = computed(() => {
-  if (!product.value) return { label: 'Lembaga / OPD', nama: 'Dinas Kabupaten Boyolali' }
+// 1. Computed untuk Kategori Utama (1 dari 3 Kategori)
+const kategoriUtama = computed(() => {
+  if (!product.value) return '-'
+  if (product.value.opd) return 'Perangkat Daerah (OPD)'
+  if (product.value.pemerintah) return 'Pemerintah'
+  if (product.value.masyarakat) return 'Masyarakat'
+  return '-'
+})
 
-  // 1. Jika diajukan oleh OPD / Pemerintah
-  if (product.value.opd) {
-    return {
-      label: 'Kategori OPD',
-      nama: product.value.opd.nama_opd
-    }
-  } 
+// 2. Computed untuk Sub-Kategori (Pilihan Dinamis dari Seeder)
+const subKategoriDinamis = computed(() => {
+  if (!product.value) return '-'
   
-  // 2. Jika diajukan oleh Pemerintah Non-OPD (Kecamatan/Pemerintah Desa, dll)
+  // Jika OPD, ambil nama OPD-nya
+  if (product.value.opd) {
+    return product.value.opd.nama_opd
+  }
+  
+  // Jika Pemerintah, ambil nama instansi pemerintahnya
   if (product.value.pemerintah) {
-    return {
-      label: 'Kategori Pemerintah',
-      nama: product.value.pemerintah.nama_instansi || 'Pemerintah Daerah' // Sesuaikan field backend-mu
-    }
+    return product.value.pemerintah.nama_pemerintah
   }
-
-  // 3. Jika diajukan oleh Kategori Masyarakat (Mahasiswa, Umum, Sekolah, dll)
+  
+  // Jika Masyarakat, ambil nama jenis masyarakat yang dipilih
   if (product.value.masyarakat) {
-    return {
-      label: 'Kategori Masyarakat',
-      nama: product.value.masyarakat.nama_kelompok || 'Masyarakat Umum' // Sesuaikan field backend-mu
-    }
+    return product.value.masyarakat.nama_masyarakat
   }
-
-  // Fallback default jika tidak ada relasi yang terisi
-  return {
-    label: 'Kategori Pengaju',
-    nama: 'Dinas Kabupaten Boyolali'
-  }
+  
+  return '-'
 })
 
 onMounted(async () => {

@@ -15,7 +15,16 @@ class PublicController extends Controller
     {
         $products = ProdukInovasi::where('status_kurasi', 'approved')
             ->where('is_active', true)
-            ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi'])
+            // 🎯 PERBAIKAN: Tambahkan masyarakat dan pemerintah agar filter Home tidak error
+            ->with([
+                'inisiatorProfile.kelurahan.kecamatan', 
+                'opd', 
+                'pemerintah', 
+                'masyarakat', 
+                'bentukInovasi', 
+                'tahapanInovasi', 
+                'mediaInovasi'
+            ])
             ->get();
             
         return response()->json($products);
@@ -25,7 +34,17 @@ class PublicController extends Controller
     {
         $product = ProdukInovasi::where('status_kurasi', 'approved')
             ->where('is_active', true)
-            ->with(['inisiatorProfile.kelurahan.kecamatan', 'opd', 'bentukInovasi', 'tahapanInovasi', 'mediaInovasi', 'adminProfile'])
+            // 🎯 PERBAIKAN: Tambahkan relasi kategori lengkap & nested user untuk admin profile
+            ->with([
+                'inisiatorProfile.kelurahan.kecamatan', 
+                'opd', 
+                'pemerintah', 
+                'masyarakat', 
+                'bentukInovasi', 
+                'tahapanInovasi', 
+                'mediaInovasi', 
+                'adminProfile.user' // 👈 Ditambah .user agar email verifikator muncul
+            ])
             ->findOrFail($id);
             
         return response()->json($product);
