@@ -1,0 +1,76 @@
+services:
+  # MySQL Database Service (MySQL 8.4.3)
+  mysql:
+    image: mysql:8.4.3
+    container_name: inovasi_mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: Inovasi
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: inovasi_user
+      MYSQL_PASSWORD: inovasi_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - inovasi_net
+
+  # PHP Service (PHP 8.2-fpm)
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: inovasi_backend
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/backend
+    volumes:
+      - ./backend:/var/www/backend
+    depends_on:
+      - mysql
+    networks:
+      - inovasi_net
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: inovasi_webserver
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/backend
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - inovasi_net
+
+  # Frontend Service (Node 22.19, NPM 10.9)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+    container_name: inovasi_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - webserver
+    networks:
+      - inovasi_net
+
+networks:
+  inovasi_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

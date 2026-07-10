@@ -1,4 +1,4 @@
-<template>
+do<template>
   <div class="flex-1 flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950/40 transition-colors duration-300">
     <Sidebar />
 
